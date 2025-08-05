@@ -5,59 +5,15 @@ Converts natural language commands to extraction strategies
 
 import asyncio
 import logging
-import json
-import re
-from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime, timedelta
-from dataclasses import dataclass
-from enum import Enum
+from typing import Dict, Any, List, Optional
 
-from models.schemas import ExtractionConfig, ExtractionStrategy
+from features.nlp.intent_classification import IntentClassifier
+from features.nlp.entity_extraction import EntityExtractor
+from features.nlp.conversation_manager import ConversationManager
+from features.nlp.complex_logic_processor import ComplexLogicProcessor
+from features.nlp.models import Intent, Entity, IntentType, EntityType
+from models.schemas import ExtractionConfig
 from utils.exceptions import ScrapingError
-
-
-class IntentType(str, Enum):
-    """Types of scraping intents"""
-    EXTRACT_DATA = "extract_data"
-    FILTER_CONTENT = "filter_content"
-    NAVIGATE_SITE = "navigate_site"
-    ANALYZE_CONTENT = "analyze_content"
-    COMPARE_DATA = "compare_data"
-    MONITOR_CHANGES = "monitor_changes"
-
-
-class EntityType(str, Enum):
-    """Types of entities that can be extracted from queries"""
-    PRICE = "price"
-    RATING = "rating"
-    DATE = "date"
-    QUANTITY = "quantity"
-    CATEGORY = "category"
-    BRAND = "brand"
-    LOCATION = "location"
-    CONTACT = "contact"
-    URL = "url"
-    TEXT_CONTENT = "text_content"
-
-
-@dataclass
-class Intent:
-    """Represents a parsed user intent"""
-    type: IntentType
-    confidence: float
-    target_data: List[str]
-    filters: Dict[str, Any]
-    conditions: List[str]
-    output_format: str = "json"
-
-
-@dataclass
-class Entity:
-    """Represents an extracted entity from user query"""
-    type: EntityType
-    value: Any
-    confidence: float
-    context: str
 
 
 class NaturalLanguageProcessor:
@@ -67,103 +23,30 @@ class NaturalLanguageProcessor:
 
     def __init__(self, local_llm_manager):
         self.llm_manager = local_llm_manager
-        self.intent_patterns = self.load_intent_patterns()
-        self.entity_patterns = self.load_entity_patterns()
-        self.context_memory = {}
         self.logger = logging.getLogger(__name__)
-    
-    def load_intent_patterns(self) -> Dict[str, Any]:
-        """Load predefined intent patterns for quick classification"""
-        return {
-            "extract_data": {
-                "keywords": ["get", "extract", "scrape", "find", "collect", "gather", "retrieve"],
-                "patterns": [
-                    r"get\s+(?:all\s+)?(\w+)",
-                    r"extract\s+(?:all\s+)?(\w+)",
-                    r"find\s+(?:all\s+)?(\w+)",
-                    r"scrape\s+(?:all\s+)?(\w+)"
-                ],
-                "examples": ["get all products", "extract prices", "find reviews"]
-            },
-            "filter_content": {
-                "keywords": ["under", "over", "above", "below", "between", "with", "having"],
-                "patterns": [
-                    r"under\s+\$?(\d+)",
-                    r"over\s+\$?(\d+)",
-                    r"above\s+(\d+(?:\.\d+)?)\s*(?:stars?|rating)",
-                    r"with\s+(\d+\+?)\s*(?:stars?|rating)",
-                    r"between\s+\$?(\d+)\s*(?:and|-)?\s*\$?(\d+)"
-                ],
-                "examples": ["under $50", "above 4 stars", "with 5+ rating"]
-            },
-            "analyze_content": {
-                "keywords": ["analyze", "understand", "classify", "categorize", "summarize"],
-                "patterns": [
-                    r"analyze\s+(\w+)",
-                    r"understand\s+(?:the\s+)?(\w+)",
-                    r"classify\s+(?:the\s+)?(\w+)"
-                ],
-                "examples": ["analyze sentiment", "understand content", "classify products"]
-            }
-        }
 
-    def load_entity_patterns(self) -> Dict[str, Any]:
-        """Load regex patterns for entity extraction"""
-        return {
-            "price": {
-                "patterns": [
-                    r"\$(\d+(?:\.\d{2})?)",
-                    r"(\d+(?:\.\d{2})?)\s*(?:dollars?|USD|€|euros?)",
-                    r"under\s+\$?(\d+)",
-                    r"over\s+\$?(\d+)",
-                    r"between\s+\$?(\d+)\s*(?:and|-)?\s*\$?(\d+)"
-                ],
-                "examples": ["$50", "under $100", "between $20-$50"]
-            },
-            "rating": {
-                "patterns": [
-                    r"(\d+(?:\.\d+)?)\s*(?:stars?|rating)",
-                    r"(\d+\+)\s*(?:stars?|rating)",  # Capture the + as well
-                    r"above\s+(\d+(?:\.\d+)?)\s*(?:stars?|rating)",
-                    r"(?:with|having)\s+(\d+\+?)\s*(?:stars?|rating)"
-                ],
-                "examples": ["4 stars", "5+ rating", "above 3.5 stars"]
-            },
-            "date": {
-                "patterns": [
-                    r"last\s+(\d+)\s+(days?|weeks?|months?)",
-                    r"(?:in\s+)?(?:the\s+)?(?:past|last)\s+(week|month|year)",
-                    r"(?:this|current)\s+(week|month|year)",
-                    r"recent(?:ly)?",
-                    r"today|yesterday"
-                ],
-                "examples": ["last 30 days", "this week", "recent", "yesterday"]
-            },
-            "quantity": {
-                "patterns": [
-                    r"(?:all|every)\s+(\w+)",
-                    r"(?:first|top)\s+(\d+)\s+(\w+)",
-                    r"(\d+)\s+(?:or\s+)?(?:more|less)\s+(\w+)"
-                ],
-                "examples": ["all products", "first 10 items", "5 or more reviews"]
-            }
-        }
+        # Initialize component modules
+        self.intent_classifier = IntentClassifier(local_llm_manager)
+        self.entity_extractor = EntityExtractor()
+        self.conversation_manager = ConversationManager()
+        self.complex_logic_processor = ComplexLogicProcessor(local_llm_manager)
 
-    async def process_command(self, user_input: str, session_id: Optional[str] = None, check_ambiguity: bool = True, enable_complex_logic: bool = True) -> Dict[str, Any]:
+    async def process_command(self, user_input: str, session_id: Optional[str] = None,
+                            check_ambiguity: bool = True, enable_complex_logic: bool = True) -> Dict[str, Any]:
         """
         Process natural language command and return extraction config with support for complex logic
         """
         try:
             self.logger.info(f"Processing command: {user_input}")
 
-            # Parse intent and entities
-            intent = await self.parse_intent(user_input)
-            entities = await self.extract_entities(user_input)
+            # Parse intent and entities using specialized modules
+            intent = await self.intent_classifier.parse_intent(user_input)
+            entities = await self.entity_extractor.extract_entities(user_input)
 
             # Handle context from previous commands
             if session_id:
-                context = self.context_memory.get(session_id, {})
-                intent = self.apply_context(intent, context, user_input)
+                context = self.conversation_manager.context_memory.get(session_id, {})
+                intent = self.conversation_manager.apply_context(intent, context, user_input)
 
             # Check for ambiguity if requested
             if check_ambiguity:
@@ -184,16 +67,16 @@ class NaturalLanguageProcessor:
             # Parse complex conditions if enabled
             conditions = {}
             if enable_complex_logic:
-                conditions = await self.parse_complex_conditions(user_input, intent)
+                conditions = await self.complex_logic_processor.parse_complex_conditions(user_input, intent)
 
             # Update context memory
             if session_id:
-                self.update_context_memory(session_id, user_input, intent, entities)
+                self.conversation_manager.update_context_memory(session_id, user_input, intent, entities)
 
             # Choose extraction config builder based on complexity
             if conditions.get("has_complex_logic", False):
                 self.logger.info("Using complex extraction config builder")
-                extraction_config = await self.build_complex_extraction_config(intent, entities, conditions)
+                extraction_config = await self.complex_logic_processor.build_complex_extraction_config(intent, entities, conditions)
             else:
                 self.logger.info("Using standard extraction config builder")
                 extraction_config = await self.build_extraction_config(intent, entities)
@@ -229,144 +112,189 @@ class NaturalLanguageProcessor:
         except Exception as e:
             self.logger.error(f"Error processing command '{user_input}': {e}")
             raise ScrapingError(f"Failed to process natural language command: {e}")
-    
-    async def parse_intent(self, user_input: str) -> Intent:
-        """
-        Use local LLM to understand user intent with fallback to pattern matching
-        """
+
+    async def detect_ambiguity(self, user_input: str, intent: Intent, entities: List[Entity]) -> Dict[str, Any]:
+        """Detect ambiguous queries and generate clarifying questions"""
         try:
-            # First try pattern-based classification for speed
-            pattern_intent = self._classify_intent_by_patterns(user_input)
+            user_lower = user_input.lower()
+            ambiguity_score = 0.0
+            ambiguity_reasons = []
+            clarifying_questions = []
 
-            if pattern_intent.confidence > 0.8:
-                self.logger.info(f"High confidence pattern match: {pattern_intent.type}")
-                return pattern_intent
+            # Check for low confidence intent
+            if intent.confidence < 0.6:
+                ambiguity_score += 0.3
+                ambiguity_reasons.append("low_confidence_intent")
+                clarifying_questions.append("Could you be more specific about what you want to do?")
 
-            # Use LLM for complex queries
-            llm_intent = await self._classify_intent_by_llm(user_input)
+            # Check for vague target data
+            if not intent.target_data or intent.target_data == ["content"]:
+                ambiguity_score += 0.2
+                ambiguity_reasons.append("vague_target_data")
+                clarifying_questions.append("What specific information do you want to extract?")
 
-            # Combine pattern and LLM results for best accuracy
-            final_intent = self._combine_intent_results(pattern_intent, llm_intent)
+            # Check for missing context (pronouns without clear reference)
+            pronouns = ["it", "this", "that", "these", "those", "them"]
+            if any(pronoun in user_lower.split() for pronoun in pronouns):
+                ambiguity_score += 0.2
+                ambiguity_reasons.append("unclear_references")
+                clarifying_questions.append("What does 'it' or 'this' refer to in your request?")
 
-            return final_intent
+            # Check for multiple possible interpretations
+            if len(intent.target_data) > 3:
+                ambiguity_score += 0.1
+                ambiguity_reasons.append("too_many_targets")
+                clarifying_questions.append("You mentioned several data types. Which ones are most important?")
+
+            # Determine if query is ambiguous (threshold: 0.4)
+            is_ambiguous = ambiguity_score >= 0.4
+
+            result = {
+                "is_ambiguous": is_ambiguous,
+                "ambiguity_score": ambiguity_score,
+                "reasons": ambiguity_reasons,
+                "clarifying_questions": clarifying_questions,
+                "confidence_threshold": 0.4,
+                "suggestions": self._generate_query_suggestions(user_input, intent, entities) if is_ambiguous else []
+            }
+
+            if is_ambiguous:
+                self.logger.info(f"Detected ambiguous query with score {ambiguity_score:.2f}")
+
+            return result
 
         except Exception as e:
-            self.logger.error(f"Error parsing intent: {e}")
-            # Fallback to basic extraction intent
-            return Intent(
-                type=IntentType.EXTRACT_DATA,
-                confidence=0.3,
-                target_data=["content"],
-                filters={},
-                conditions=[]
-            )
+            self.logger.error(f"Error detecting ambiguity: {e}")
+            return {"is_ambiguous": False, "error": str(e)}
 
-    def _classify_intent_by_patterns(self, user_input: str) -> Intent:
-        """Fast pattern-based intent classification"""
-        user_lower = user_input.lower()
+    def _generate_query_suggestions(self, user_input: str, intent: Intent, entities: List[Entity]) -> List[str]:
+        """Generate example queries to help users clarify their intent"""
+        suggestions = []
 
-        # Check for extraction keywords
-        extract_score = 0
-        target_data = []
-        filters = {}
-        conditions = []
+        # Generate suggestions based on intent type
+        if intent.type == IntentType.EXTRACT_DATA:
+            suggestions.extend([
+                "Get all product names and prices from this page",
+                "Extract reviews with ratings above 4 stars",
+                "Find all contact information on this website"
+            ])
+        elif intent.type == IntentType.FILTER_CONTENT:
+            suggestions.extend([
+                "Show only products under $100",
+                "Filter reviews from the last 30 days",
+                "Get items with 5-star ratings only"
+            ])
 
-        for intent_type, patterns in self.intent_patterns.items():
-            for keyword in patterns["keywords"]:
-                if keyword in user_lower:
-                    extract_score += 0.2
+        return suggestions[:3]
 
-            for pattern in patterns["patterns"]:
-                matches = re.findall(pattern, user_lower)
-                if matches:
-                    extract_score += 0.3
-                    if intent_type == "extract_data":
-                        target_data.extend([match if isinstance(match, str) else match[0] for match in matches])
-
-        # Detect filtering criteria
-        if any(word in user_lower for word in ["under", "over", "above", "below", "between"]):
-            filters["has_price_filter"] = True
-            extract_score += 0.2
-
-        if any(word in user_lower for word in ["star", "rating", "review"]):
-            filters["has_rating_filter"] = True
-            extract_score += 0.2
-
-        # Detect conditional logic
-        if any(phrase in user_lower for phrase in ["if", "when", "unless", "in case"]):
-            conditions.append("conditional_logic_detected")
-            extract_score += 0.1
-
-        confidence = min(extract_score, 1.0)
-
-        return Intent(
-            type=IntentType.EXTRACT_DATA,
-            confidence=confidence,
-            target_data=target_data or ["content"],
-            filters=filters,
-            conditions=conditions
-        )
-
-    async def _classify_intent_by_llm(self, user_input: str) -> Intent:
-        """Use LLM for sophisticated intent classification"""
-        prompt = f"""
-        Analyze this web scraping request and classify the intent:
-
-        User Request: "{user_input}"
-
-        Classify the intent as one of:
-        1. EXTRACT_DATA - User wants to extract specific data from a website
-        2. FILTER_CONTENT - User wants to filter extracted data by criteria
-        3. ANALYZE_CONTENT - User wants to analyze or understand content
-        4. COMPARE_DATA - User wants to compare data across sources
-        5. MONITOR_CHANGES - User wants to track changes over time
-
-        Also identify:
-        - Target data types (products, prices, reviews, articles, etc.)
-        - Filtering criteria (price ranges, ratings, dates, categories)
-        - Any conditional logic or special requirements
-        - Confidence level (0.0 to 1.0)
-
-        Return a JSON response with this structure:
-        {{
-            "intent_type": "EXTRACT_DATA",
-            "confidence": 0.9,
-            "target_data": ["products", "prices"],
-            "filters": {{"price_range": "under_50", "rating": "above_4"}},
-            "conditions": ["if_price_missing_check_description"],
-            "reasoning": "User wants to extract product data with price and rating filters"
-        }}
-        """
-
+    async def build_extraction_config(self, intent: Intent, entities: List[Entity]) -> Dict[str, Any]:
+        """Convert Intent and Entity objects into ExtractionConfig for the scraper"""
         try:
-            response = await self.llm_manager.process_content(
-                prompt,
-                "intent_classification",
-                temperature=0.1,
-                max_tokens=500
-            )
+            config = {
+                "execution_mode": "standard",
+                "strategy": "css_selector",
+                "target_data": intent.target_data,
+                "filters": intent.filters,
+                "conditions": intent.conditions,
+                "output_format": intent.output_format,
+                "extraction_metadata": {
+                    "intent_confidence": intent.confidence,
+                    "entity_count": len(entities),
+                    "requires_llm": intent.confidence < 0.7,
+                    "estimated_execution_time": 5
+                }
+            }
 
-            # Parse LLM response
-            result = json.loads(response)
+            # Add entity-based configurations
+            for entity in entities:
+                if entity.type == EntityType.PRICE:
+                    config.setdefault("price_filters", []).append(entity.value)
+                elif entity.type == EntityType.RATING:
+                    config.setdefault("rating_filters", []).append(entity.value)
+                elif entity.type == EntityType.DATE:
+                    config.setdefault("date_filters", []).append(entity.value)
+                elif entity.type == EntityType.QUANTITY:
+                    config.setdefault("quantity_filters", []).append(entity.value)
 
-            return Intent(
-                type=IntentType(result["intent_type"].lower()),
-                confidence=result["confidence"],
-                target_data=result["target_data"],
-                filters=result["filters"],
-                conditions=result["conditions"]
-            )
+            # Determine extraction strategy based on intent and entities
+            if intent.type == IntentType.ANALYZE_CONTENT:
+                config["strategy"] = "llm_analysis"
+                config["extraction_metadata"]["requires_llm"] = True
+            elif any(entity.type in [EntityType.PRICE, EntityType.RATING] for entity in entities):
+                config["strategy"] = "structured_data_extraction"
 
-        except (json.JSONDecodeError, KeyError, ValueError) as e:
-            self.logger.warning(f"Failed to parse LLM intent response: {e}")
-            # Return low-confidence fallback
-            return Intent(
-                type=IntentType.EXTRACT_DATA,
-                confidence=0.4,
-                target_data=["content"],
-                filters={},
-                conditions=[]
-            )
+            self.logger.info(f"Built extraction config with strategy: {config['strategy']}")
+            return config
+
+        except Exception as e:
+            self.logger.error(f"Error building extraction config: {e}")
+            return {
+                "execution_mode": "simple",
+                "strategy": "css_selector",
+                "target_data": ["content"],
+                "error": str(e)
+            }
+
+    # Delegate methods to specialized modules
+    async def resolve_ambiguity(self, user_input: str, clarification: str, session_id: Optional[str] = None) -> Dict[str, Any]:
+        """Process user's clarification to resolve ambiguity"""
+        try:
+            # Combine original input with clarification
+            combined_input = f"{user_input} {clarification}"
+
+            # Re-process with additional context
+            intent = await self.intent_classifier.parse_intent(combined_input)
+            entities = await self.entity_extractor.extract_entities(combined_input)
+
+            # Apply session context if available
+            if session_id and session_id in self.conversation_manager.context_memory:
+                context = self.conversation_manager.context_memory[session_id]
+                intent = self.conversation_manager.apply_context(intent, context, combined_input)
+
+            # Check if ambiguity is resolved
+            ambiguity_check = await self.detect_ambiguity(combined_input, intent, entities)
+
+            if not ambiguity_check["is_ambiguous"]:
+                # Ambiguity resolved, build extraction config
+                extraction_config = await self.build_extraction_config(intent, entities)
+
+                # Update context memory
+                if session_id:
+                    self.conversation_manager.update_context_memory(session_id, combined_input, intent, entities)
+
+                return {
+                    "ambiguity_resolved": True,
+                    "extraction_config": extraction_config,
+                    "intent": {
+                        "type": intent.type,
+                        "confidence": intent.confidence,
+                        "target_data": intent.target_data
+                    },
+                    "message": "Great! I understand your request now."
+                }
+            else:
+                # Still ambiguous, ask for more clarification
+                return {
+                    "ambiguity_resolved": False,
+                    "ambiguity_check": ambiguity_check,
+                    "message": "I need a bit more clarification to understand your request."
+                }
+
+        except Exception as e:
+            self.logger.error(f"Error resolving ambiguity: {e}")
+            return {
+                "ambiguity_resolved": False,
+                "error": str(e),
+                "message": "Sorry, I had trouble processing your clarification. Please try rephrasing."
+            }
+
+    def get_conversation_summary(self, session_id: str) -> Dict[str, Any]:
+        """Get a summary of the conversation for a session"""
+        return self.conversation_manager.get_conversation_summary(session_id)
+
+    def cleanup_old_sessions(self, max_age_hours: int = 24) -> Dict[str, Any]:
+        """Clean up old conversation sessions to prevent memory bloat"""
+        return self.conversation_manager.cleanup_old_sessions(max_age_hours)
 
     def _combine_intent_results(self, pattern_intent: Intent, llm_intent: Intent) -> Intent:
         """Combine pattern and LLM results for optimal accuracy"""
@@ -620,72 +548,6 @@ class NaturalLanguageProcessor:
                     break  # Only add one entity per content type
 
         return entities
-
-    def _extract_price_entities(self, user_input: str) -> List[Entity]:
-        """Extract price-related entities"""
-        entities = []
-
-        for pattern in self.entity_patterns["price"]["patterns"]:
-            matches = re.finditer(pattern, user_input, re.IGNORECASE)
-            for match in matches:
-                if len(match.groups()) == 1:
-                    # Single price value
-                    value = float(match.group(1))
-                    entity_type = "max_price" if "under" in match.group(0).lower() else "min_price" if "over" in match.group(0).lower() else "price"
-
-                    entities.append(Entity(
-                        type=EntityType.PRICE,
-                        value={"type": entity_type, "amount": value},
-                        confidence=0.9,
-                        context=match.group(0)
-                    ))
-                elif len(match.groups()) == 2:
-                    # Price range
-                    min_price = float(match.group(1))
-                    max_price = float(match.group(2))
-
-                    entities.append(Entity(
-                        type=EntityType.PRICE,
-                        value={"type": "price_range", "min": min_price, "max": max_price},
-                        confidence=0.95,
-                        context=match.group(0)
-                    ))
-
-        return entities
-
-    async def extract_entities(self, user_input: str) -> List[Entity]:
-        """
-        Extract entities (prices, ratings, dates, etc.) from user input
-        """
-        entities = []
-
-        try:
-            # Extract price entities
-            price_entities = self._extract_price_entities(user_input)
-            entities.extend(price_entities)
-
-            # Extract rating entities
-            rating_entities = self._extract_rating_entities(user_input)
-            entities.extend(rating_entities)
-
-            # Extract date entities
-            date_entities = self._extract_date_entities(user_input)
-            entities.extend(date_entities)
-
-            # Extract quantity entities
-            quantity_entities = self._extract_quantity_entities(user_input)
-            entities.extend(quantity_entities)
-
-            # Extract content type entities
-            content_entities = self._extract_content_type_entities(user_input)
-            entities.extend(content_entities)
-
-            self.logger.info(f"Extracted {len(entities)} entities from query")
-            return entities
-
-        except Exception as e:
-            self.logger.error(f"Error extracting entities: {e}")
-            return []
 
     def apply_context(self, intent: Intent, context: Dict[str, Any], user_input: str) -> Intent:
         """
