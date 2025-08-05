@@ -1,0 +1,170 @@
+version: '3.8'
+
+services:
+  # Production SwissKnife AI Scraper Backend
+  swissknife:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production  # Use production stage with gunicorn
+    ports:
+      - "8601:8601"
+    environment:
+      - DEBUG=false
+      - ENVIRONMENT=production
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/swissknife
+      - OLLAMA_ENDPOINT=http://ollama:11434
+      - API_HOST=0.0.0.0
+      - API_PORT=8601
+      # Production CORS settings
+      - CORS_ORIGINS=${FRONTEND_URL:-http://localhost:8650}
+    volumes:
+      # Data persistence only (no source code mounting)
+      - swissknife_data:/app/data
+      - swissknife_cache:/app/cache
+      - swissknife_logs:/app/logs
+      - swissknife_models:/app/models
+    depends_on:
+      - redis
+      - postgres
+      - ollama
+    restart: unless-stopped
+    networks:
+      - swissknife-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8601/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+
+  # Production Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8650:80"
+    environment:
+      - REACT_APP_API_URL=${BACKEND_URL:-http://localhost:8601}
+      - REACT_APP_ENV=production
+      - REACT_APP_DEBUG=false
+    depends_on:
+      swissknife:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - swissknife-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+  # Redis for caching and session management
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    restart: unless-stopped
+    networks:
+      - swissknife-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=swissknife
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    networks:
+      - swissknife-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Ollama for local LLM processing
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+    restart: unless-stopped
+    networks:
+      - swissknife-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 120s
+
+  # Nginx reverse proxy (optional for production)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./docker/nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - frontend
+      - swissknife
+    restart: unless-stopped
+    networks:
+      - swissknife-network
+    profiles:
+      - reverse-proxy
+
+volumes:
+  # Backend data volumes
+  swissknife_data:
+  swissknife_cache:
+  swissknife_logs:
+  swissknife_models:
+  # Infrastructure volumes
+  redis_data:
+  postgres_data:
+  ollama_data:
+
+networks:
+  swissknife-network:
+    driver: bridge

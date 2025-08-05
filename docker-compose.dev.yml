@@ -1,0 +1,67 @@
+version: '3.8'
+
+# Development override for docker-compose.yml
+# Use with: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  # Development Backend with hot reload
+  swissknife:
+    build:
+      target: development
+    environment:
+      - DEBUG=true
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+    volumes:
+      # Mount source code for hot reload
+      - .:/app
+      - /app/__pycache__
+      - /app/.pytest_cache
+      # Development data
+      - ./data:/app/data
+      - ./cache:/app/cache
+      - ./logs:/app/logs
+      - ./models:/app/models
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8601", "--reload", "--log-level", "debug"]
+
+  # Development Frontend with hot reload
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev  # Development Dockerfile
+    volumes:
+      # Mount source code for hot reload
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/package.json:/app/package.json
+      - /app/node_modules  # Exclude node_modules
+    environment:
+      - REACT_APP_API_URL=http://localhost:8601
+      - REACT_APP_ENV=development
+      - REACT_APP_DEBUG=true
+      - CHOKIDAR_USEPOLLING=true  # For file watching in Docker
+    command: ["npm", "start"]
+    stdin_open: true
+    tty: true
+
+  # Development database with exposed port
+  postgres:
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=swissknife_dev
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+
+  # Development Redis with exposed port
+  redis:
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+
+  # Development Ollama
+  ollama:
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_DEBUG=1
