@@ -151,3 +151,5 @@ Thumbs.db
 config/local.py
 config/production.py
 secrets/
+# Frontend dependencies
+frontend/node_modules/
