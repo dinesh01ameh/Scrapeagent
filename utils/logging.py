@@ -111,11 +111,15 @@ def get_logger(name: str) -> logging.Logger:
 
 class LoggerMixin:
     """Mixin class to add logging capabilities to any class"""
-    
+
     @property
     def logger(self) -> logging.Logger:
         """Get logger for this class"""
         return logging.getLogger(self.__class__.__name__)
+
+
+# Alias for backward compatibility
+LoggingMixin = LoggerMixin
 
 
 def log_function_call(func_name: str, args: tuple = None, kwargs: dict = None):

@@ -61,6 +61,7 @@ try:
 except ImportError:
     AUDIO_PROCESSING_AVAILABLE = False
 
+from services.jina_ai_client import JinaAIClient
 from utils.logging import LoggingMixin
 from utils.exceptions import ProcessingError
 
@@ -323,13 +324,40 @@ class ImageAnalyzer(ContentAnalyzer):
 class PDFAnalyzer(ContentAnalyzer):
     """Analyze PDF documents with text extraction and structure analysis"""
 
-    def __init__(self, jina_config=None):
+    def __init__(self, jina_config=None, jina_ai_client: Optional[JinaAIClient] = None):
         super().__init__()
         self.jina_config = jina_config or {}
+        # PRIORITY: Use Jina AI Reader for PDF processing
+        self.jina_ai_client = jina_ai_client
 
     async def process(self, content_url: str) -> Dict[str, Any]:
-        """Process PDF content from URL"""
+        """Process PDF content from URL - PRIORITIZE Jina AI Reader"""
         try:
+            # PRIORITY 1: Use Jina AI Reader for PDF processing
+            if self.jina_ai_client:
+                self.logger.info(f"🚀 Processing PDF via Jina AI Reader: {content_url}")
+                try:
+                    jina_result = await self.jina_ai_client.read_url(
+                        content_url,
+                        options={"format": "markdown", "summary": True}
+                    )
+
+                    if jina_result.get("success"):
+                        return {
+                            "content_type": "pdf",
+                            "source_url": content_url,
+                            "processed_at": datetime.now().isoformat(),
+                            "text_content": jina_result.get("content", ""),
+                            "processing_method": "jina_ai_reader",
+                            "source": "jina_ai_reader",
+                            "success": True
+                        }
+                except Exception as e:
+                    self.logger.warning(f"⚠️ Jina AI Reader failed for PDF, falling back: {e}")
+
+            # FALLBACK: Local PDF processing
+            self.logger.info("⚠️ Using fallback local PDF processing")
+
             # Download PDF
             pdf_path = await self._download_pdf(content_url)
 
@@ -337,7 +365,8 @@ class PDFAnalyzer(ContentAnalyzer):
                 analysis = {
                     "content_type": "pdf",
                     "source_url": content_url,
-                    "processed_at": datetime.now().isoformat()
+                    "processed_at": datetime.now().isoformat(),
+                    "processing_method": "local_fallback"
                 }
 
                 # Basic PDF properties
@@ -353,8 +382,6 @@ class PDFAnalyzer(ContentAnalyzer):
                     tables = await self._extract_pdf_tables(pdf_path)
                     if tables:
                         analysis["tables"] = tables
-
-                # Use Jina Reader if configured
                 if self.jina_config.get("api_key"):
                     jina_analysis = await self._analyze_with_jina(content_url)
                     analysis["jina_analysis"] = jina_analysis
@@ -955,16 +982,18 @@ class MultiModalProcessor(LoggingMixin):
     Main multi-modal content processor that handles all content types
     """
 
-    def __init__(self, local_llm=None, jina_config=None):
+    def __init__(self, local_llm=None, jina_config=None, jina_ai_client: Optional[JinaAIClient] = None):
         super().__init__()
         self.local_llm = local_llm
         self.jina_config = jina_config or {}
+        # CRITICAL: Jina AI client for advanced processing
+        self.jina_ai_client = jina_ai_client
 
-        # Initialize content analyzers
+        # Initialize content analyzers with Jina AI client
         self.content_analyzers = {
             "text": TextAnalyzer(local_llm),
             "image": ImageAnalyzer(local_llm),
-            "pdf": PDFAnalyzer(jina_config),
+            "pdf": PDFAnalyzer(jina_config, jina_ai_client=self.jina_ai_client),  # CRITICAL: Pass Jina AI client
             "table": TableAnalyzer(local_llm),
             "video": VideoAnalyzer(local_llm),
             "audio": AudioAnalyzer(local_llm)

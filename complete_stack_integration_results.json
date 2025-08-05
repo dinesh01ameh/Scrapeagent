@@ -1,0 +1,46 @@
+{
+  "timestamp": "2025-08-05T15:03:43.985136",
+  "stack_components": {
+    "crawl4ai_docker": {
+      "status": "healthy",
+      "version": "0.5.1-d1",
+      "endpoint": "http://localhost:11235"
+    },
+    "jina_ai": {
+      "status": "configured",
+      "api_key_configured": true,
+      "endpoints": 4
+    }
+  },
+  "integration_tests": {
+    "scraper_initialization": {
+      "success": true,
+      "crawl4ai_integrated": true,
+      "jina_ai_integrated": true,
+      "components_count": 2
+    },
+    "basic_scraping": {
+      "success": true,
+      "method": "crawl4ai_docker_primary",
+      "source": "crawl4ai_docker_service",
+      "uses_crawl4ai_primary": true
+    },
+    "css_extraction": {
+      "success": true,
+      "method": "crawl4ai_docker_primary",
+      "uses_crawl4ai": true
+    },
+    "llm_extraction": {
+      "success": true,
+      "method": "crawl4ai_docker_primary",
+      "uses_crawl4ai": true
+    },
+    "adaptive_extraction": {
+      "success": true,
+      "strategy": "ExtractionStrategy.REGEX",
+      "confidence": 0.8,
+      "uses_crawl4ai": true
+    }
+  },
+  "overall_status": "excellent"
+}

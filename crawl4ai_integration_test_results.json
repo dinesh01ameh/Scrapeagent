@@ -1,0 +1,44 @@
+{
+  "test_timestamp": "2025-08-05T14:05:51.124345",
+  "base_url": "http://localhost:11235",
+  "tests": {
+    "health_endpoint": {
+      "status": "PASS",
+      "response_code": 200,
+      "health_data": {
+        "status": "ok",
+        "timestamp": 1754382951.3547006,
+        "version": "0.5.1-d1"
+      }
+    },
+    "api_schema": {
+      "status": "PASS",
+      "response_code": 200,
+      "has_openapi": false,
+      "has_paths": false,
+      "api_version": null
+    },
+    "basic_crawl": {
+      "status": "PASS",
+      "response_code": 200,
+      "crawl_success": true,
+      "url_crawled": "https://example.com",
+      "content_length": 5,
+      "has_html": true,
+      "has_markdown": true
+    },
+    "docker_client": {
+      "status": "FAIL",
+      "client_compatible": false,
+      "error": "Authentication required. Call authenticate() first."
+    }
+  },
+  "summary": {
+    "total_tests": 4,
+    "passed": 3,
+    "failed": 1,
+    "skipped": 0,
+    "success_rate": 75.0,
+    "overall_status": "FAIL"
+  }
+}

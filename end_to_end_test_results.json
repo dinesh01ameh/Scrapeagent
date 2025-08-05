@@ -1,0 +1,124 @@
+{
+  "test_suite_start": "2025-08-05T15:18:37.485170",
+  "pipeline_tests": {
+    "initialization": {
+      "success": true,
+      "initialization_time": 0.01496434211730957,
+      "components_loaded": true
+    },
+    "component_integration": {
+      "all_components_active": true,
+      "component_status": {
+        "crawl4ai_docker": true,
+        "jina_ai": true,
+        "performance_optimizer": true
+      },
+      "total_components": 3
+    },
+    "request_processing": {
+      "success": true,
+      "processing_time": 0.6389114856719971,
+      "method_used": "crawl4ai_docker_primary_optimized",
+      "optimization_active": true,
+      "response_structure_valid": true
+    },
+    "response_generation": {
+      "response_complete": true,
+      "validation_details": {
+        "has_url": true,
+        "has_result": true,
+        "has_method": true,
+        "has_timestamp": true,
+        "result_has_content": true,
+        "performance_metrics_included": true
+      },
+      "content_length": 1248,
+      "metadata_present": true
+    },
+    "overall_health": {
+      "pipeline_operational": true,
+      "health_score": 100.0,
+      "health_breakdown": {
+        "initialization_success": true,
+        "components_integrated": true,
+        "processing_functional": true,
+        "response_complete": true
+      }
+    }
+  },
+  "performance_benchmarks": {
+    "throughput_test": {
+      "total_requests": 20,
+      "successful_requests": 1,
+      "total_time": 0.556633472442627,
+      "requests_per_second": 35.93028624785303,
+      "success_rate": 0.05
+    },
+    "latency_test": {
+      "min_latency": 1.239776611328125e-05,
+      "max_latency": 2.7953860759735107,
+      "avg_latency": 0.2795575618743896,
+      "median_latency": 1.3113021850585938e-05,
+      "p95_latency": 2.7953860759735107,
+      "latency_std": 0.8839720343318649
+    },
+    "concurrent_requests": {},
+    "cache_performance": {
+      "first_request_time": 0.00011110305786132812,
+      "second_request_time": 2.9087066650390625e-05,
+      "cache_improvement_percent": 73.8197424892704,
+      "cache_hit_detected": true
+    }
+  },
+  "real_world_scenarios": {
+    "basic_web_scraping": {
+      "success_rate": 1.0,
+      "expected_success_rate": 0.9,
+      "meets_expectations": true,
+      "total_time": 4.900827884674072,
+      "average_response_time": 1.6326571305592854,
+      "tests_run": 3,
+      "tests_passed": 3,
+      "methods_distribution": {
+        "crawl4ai_docker_primary_optimized": 3
+      },
+      "error_count": 0
+    },
+    "content_extraction": {
+      "success_rate": 1.0,
+      "expected_success_rate": 0.8,
+      "meets_expectations": true,
+      "total_time": 12.598506927490234,
+      "average_response_time": 4.198814630508423,
+      "tests_run": 3,
+      "tests_passed": 3,
+      "methods_distribution": {
+        "crawl4ai_docker_primary_optimized": 3
+      },
+      "error_count": 0
+    },
+    "multimodal_processing": {
+      "success_rate": 1.0,
+      "expected_success_rate": 0.7,
+      "meets_expectations": true,
+      "total_time": 3.6952056884765625,
+      "average_response_time": 1.231092055638631,
+      "tests_run": 3,
+      "tests_passed": 3,
+      "methods_distribution": {
+        "crawl4ai_docker_primary_optimized": 3
+      },
+      "error_count": 0
+    }
+  },
+  "stress_tests": {},
+  "overall_metrics": {
+    "pipeline_health_score": 100.0,
+    "average_scenario_success_rate": 1.0,
+    "throughput_rps": 35.93028624785303,
+    "average_latency_seconds": 0.2795575618743896,
+    "cache_performance_improvement": 73.8197424892704,
+    "test_completion_time": "2025-08-05T15:19:03.181440",
+    "overall_grade": "A+ (Excellent)"
+  }
+}

@@ -9,7 +9,7 @@ from datetime import datetime
 import hashlib
 import json
 
-from crawl4ai import AsyncWebCrawler
+from services.crawl4ai_client import Crawl4aiDockerClient
 from bs4 import BeautifulSoup
 import re
 from urllib.parse import urljoin, urlparse
@@ -225,7 +225,10 @@ class AdaptiveExtractionEngine:
     Core intelligence that chooses the right extraction strategy
     """
 
-    def __init__(self, local_llm_config):
+    def __init__(self, local_llm_config, crawl4ai_client: Optional[Crawl4aiDockerClient] = None):
+        # PRIORITY: Use crawl4ai Docker client for all extraction strategies
+        self.crawl4ai_client = crawl4ai_client
+
         self.strategies = [
             CSSExtractionStrategy(),
             XPathExtractionStrategy(),
@@ -279,11 +282,20 @@ class AdaptiveExtractionEngine:
             )
 
     async def _fetch_content(self, url: str) -> str:
-        """Fetch webpage content"""
+        """Fetch webpage content using crawl4ai Docker service (PRIORITY)"""
         try:
+            # PRIORITY: Use crawl4ai Docker client if available
+            if self.crawl4ai_client:
+                self.logger.info(f"🚀 Fetching content via crawl4ai Docker service: {url}")
+                result = await self.crawl4ai_client.crawl_url(url)
+                return result.get("html", "") if result.get("success") else ""
+
+            # FALLBACK: Direct crawl4ai (should not be reached in normal operation)
+            self.logger.warning("⚠️ Using fallback crawl4ai method - Docker client not available")
             async with AsyncWebCrawler() as crawler:
                 result = await crawler.arun(url=url)
                 return result.html if result.success else ""
+
         except Exception as e:
             raise ScrapingError(f"Failed to fetch content from {url}: {e}")
 
@@ -345,17 +357,25 @@ class AdaptiveExtractionEngine:
         primary_strategy: BaseExtractionStrategy,
         user_query: str
     ) -> Dict[str, Any]:
-        """Execute extraction with fallback chain"""
+        """Execute extraction with fallback chain - PRIORITIZE crawl4ai Docker"""
 
-        # Try primary strategy first
+        # PRIORITY 1: Try crawl4ai Docker service extraction methods
+        if self.crawl4ai_client:
+            crawl4ai_result = await self._try_crawl4ai_extraction(url, user_query, primary_strategy)
+            if crawl4ai_result and not crawl4ai_result.get("error"):
+                self.logger.info("✅ crawl4ai Docker extraction successful")
+                return crawl4ai_result
+
+        # FALLBACK 1: Try primary strategy with local processing
         try:
+            self.logger.info(f"⚠️ Falling back to local strategy: {primary_strategy.name}")
             result = await primary_strategy.extract(content, user_query, url)
             if result and not result.get("error"):
                 return result
         except Exception as e:
             self.logger.warning(f"Primary strategy {primary_strategy.name} failed: {e}")
 
-        # Try fallback strategies
+        # FALLBACK 2: Try other strategies
         fallback_order = [s for s in self.strategies if s != primary_strategy]
         fallback_order.sort(key=lambda s: s.success_rate, reverse=True)
 
@@ -370,6 +390,52 @@ class AdaptiveExtractionEngine:
                 continue
 
         return {"error": "All extraction strategies failed"}
+
+    async def _try_crawl4ai_extraction(
+        self,
+        url: str,
+        user_query: str,
+        primary_strategy: BaseExtractionStrategy
+    ) -> Optional[Dict[str, Any]]:
+        """Try extraction using crawl4ai Docker service methods"""
+        try:
+            # Determine the best crawl4ai extraction method based on strategy
+            if primary_strategy.name == "css":
+                # Try to infer CSS selectors from query
+                css_selectors = self._infer_css_selectors_from_query(user_query)
+                if css_selectors:
+                    self.logger.info(f"🎯 Using crawl4ai CSS extraction: {css_selectors}")
+                    result = await self.crawl4ai_client.extract_with_css(url, css_selectors)
+                    return self._format_crawl4ai_result(result)
+
+            elif primary_strategy.name == "xpath":
+                # Try to infer XPath expressions from query
+                xpath_expressions = self._infer_xpath_from_query(user_query)
+                if xpath_expressions:
+                    self.logger.info(f"🎯 Using crawl4ai XPath extraction: {xpath_expressions}")
+                    result = await self.crawl4ai_client.extract_with_xpath(url, xpath_expressions)
+                    return self._format_crawl4ai_result(result)
+
+            elif primary_strategy.name == "llm":
+                # Use LLM extraction via crawl4ai
+                self.logger.info(f"🤖 Using crawl4ai LLM extraction: {user_query}")
+                result = await self.crawl4ai_client.extract_with_llm(url, user_query)
+                return self._format_crawl4ai_result(result)
+
+            # Default: Basic crawl with post-processing
+            self.logger.info("🔍 Using crawl4ai basic crawl with intelligent post-processing")
+            result = await self.crawl4ai_client.crawl_url(url)
+
+            if result.get("success"):
+                # Apply intelligent post-processing based on query
+                processed_result = self._post_process_crawl4ai_result(result, user_query)
+                return processed_result
+
+            return None
+
+        except Exception as e:
+            self.logger.error(f"crawl4ai extraction failed: {e}")
+            return None
 
     def update_strategy_performance(self, url: str, strategy_name: str, success: bool):
         """Update strategy performance metrics"""
@@ -396,3 +462,93 @@ class AdaptiveExtractionEngine:
             if strategy.name == strategy_name:
                 strategy.success_rate = history["success_rate"]
                 break
+
+    def _infer_css_selectors_from_query(self, query: str) -> Optional[Dict[str, str]]:
+        """Infer CSS selectors from natural language query"""
+        query_lower = query.lower()
+        selectors = {}
+
+        # Common patterns
+        if "title" in query_lower:
+            selectors["title"] = "h1, h2, title"
+        if "price" in query_lower:
+            selectors["price"] = ".price, .cost, [class*='price'], [class*='cost']"
+        if "description" in query_lower:
+            selectors["description"] = "p, .description, .summary"
+        if "link" in query_lower:
+            selectors["links"] = "a[href]"
+        if "image" in query_lower:
+            selectors["images"] = "img[src]"
+
+        return selectors if selectors else None
+
+    def _infer_xpath_from_query(self, query: str) -> Optional[Dict[str, str]]:
+        """Infer XPath expressions from natural language query"""
+        query_lower = query.lower()
+        expressions = {}
+
+        # Common XPath patterns
+        if "title" in query_lower:
+            expressions["title"] = "//h1/text() | //h2/text() | //title/text()"
+        if "price" in query_lower:
+            expressions["price"] = "//*[contains(@class, 'price')]/text()"
+        if "description" in query_lower:
+            expressions["description"] = "//p/text() | //*[contains(@class, 'description')]/text()"
+
+        return expressions if expressions else None
+
+    def _format_crawl4ai_result(self, result: Dict[str, Any]) -> Dict[str, Any]:
+        """Format crawl4ai result for consistency"""
+        if not result.get("success"):
+            return {"error": result.get("error_message", "crawl4ai extraction failed")}
+
+        return {
+            "extracted_data": result.get("extracted_content", {}),
+            "html": result.get("html", ""),
+            "markdown": result.get("markdown", ""),
+            "metadata": result.get("metadata", {}),
+            "source": "crawl4ai_docker",
+            "success": True
+        }
+
+    def _post_process_crawl4ai_result(self, result: Dict[str, Any], query: str) -> Dict[str, Any]:
+        """Apply intelligent post-processing to crawl4ai results"""
+        try:
+            html_content = result.get("html", "")
+            if not html_content:
+                return {"error": "No HTML content to process"}
+
+            # Use BeautifulSoup for intelligent extraction based on query
+            soup = BeautifulSoup(html_content, 'html.parser')
+            extracted_data = {}
+
+            query_lower = query.lower()
+
+            # Extract based on query intent
+            if "title" in query_lower:
+                title = soup.find('h1') or soup.find('title')
+                if title:
+                    extracted_data["title"] = title.get_text(strip=True)
+
+            if "price" in query_lower:
+                price_elements = soup.find_all(class_=lambda x: x and 'price' in x.lower())
+                if price_elements:
+                    extracted_data["prices"] = [elem.get_text(strip=True) for elem in price_elements]
+
+            if "description" in query_lower:
+                desc_elements = soup.find_all('p')[:3]  # First 3 paragraphs
+                if desc_elements:
+                    extracted_data["descriptions"] = [elem.get_text(strip=True) for elem in desc_elements]
+
+            return {
+                "extracted_data": extracted_data,
+                "html": html_content,
+                "markdown": result.get("markdown", ""),
+                "metadata": result.get("metadata", {}),
+                "source": "crawl4ai_docker_processed",
+                "success": True
+            }
+
+        except Exception as e:
+            self.logger.error(f"Post-processing failed: {e}")
+            return {"error": f"Post-processing failed: {e}"}

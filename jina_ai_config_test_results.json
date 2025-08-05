@@ -1,0 +1,27 @@
+{
+  "timestamp": "2025-08-05T15:02:33.970950",
+  "configuration_status": "good",
+  "tests": {
+    "client_initialization": {
+      "status": "pass"
+    },
+    "service_status": {
+      "status": "pass",
+      "api_key_configured": true,
+      "endpoints_count": 4
+    },
+    "reader_api": {
+      "status": "expected_auth_error",
+      "note": "Requires valid API key"
+    },
+    "configuration_files": {
+      ".env": {
+        "exists": false
+      },
+      ".env.docker": {
+        "exists": true,
+        "has_jina_config": true
+      }
+    }
+  }
+}

@@ -29,6 +29,11 @@ class ProxyError(SwissKnifeException):
     pass
 
 
+class ProxyValidationError(ProxyError):
+    """Raised when proxy validation fails"""
+    pass
+
+
 class LLMError(SwissKnifeException):
     """Raised when LLM operations fail"""
     pass
@@ -36,6 +41,11 @@ class LLMError(SwissKnifeException):
 
 class ConfigurationError(SwissKnifeException):
     """Raised when configuration is invalid"""
+    pass
+
+
+class ProcessingError(SwissKnifeException):
+    """Raised when processing operations fail"""
     pass
 
 

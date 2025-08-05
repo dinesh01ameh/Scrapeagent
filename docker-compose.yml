@@ -1,6 +1,36 @@
 version: '3.8'
 
 services:
+  # CRITICAL: crawl4ai Docker Service - Core Scraping Engine
+  crawl4ai:
+    image: unclecode/crawl4ai:latest
+    container_name: swissknife-crawl4ai
+    ports:
+      - "11235:11235"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - MAX_CONCURRENT_SESSIONS=${CRAWL4AI_MAX_SESSIONS:-10}
+      - CRAWL4AI_LOG_LEVEL=${CRAWL4AI_LOG_LEVEL:-INFO}
+    volumes:
+      - crawl4ai_data:/app/data
+      - crawl4ai_cache:/app/cache
+      - crawl4ai_logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - swissknife-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11235/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    depends_on:
+      - redis
+      - postgres
+    shm_size: 2g  # Required for Playwright browsers
+
   # Main SwissKnife AI Scraper Backend
   swissknife:
     build:
@@ -29,6 +59,7 @@ services:
       - swissknife_logs:/app/logs
       - swissknife_models:/app/models
     depends_on:
+      - crawl4ai  # CRITICAL: Ensure crawl4ai service starts first
       - redis
       - postgres
       - ollama
@@ -158,6 +189,10 @@ services:
       - monitoring
 
 volumes:
+  # Core crawl4ai volumes
+  crawl4ai_data:
+  crawl4ai_cache:
+  crawl4ai_logs:
   # Backend data volumes
   swissknife_data:
   swissknife_cache:

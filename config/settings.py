@@ -44,9 +44,17 @@ class Settings(BaseSettings):
     CODE_MODEL: str = Field(default="codellama", env="CODE_MODEL")
     MAX_CONTEXT_LENGTH: int = Field(default=8192, env="MAX_CONTEXT_LENGTH")
     
-    # Jina AI Configuration
+    # crawl4ai Configuration (CRITICAL - Core Scraping Engine)
+    CRAWL4AI_ENDPOINT: str = Field(default="http://crawl4ai:11235", env="CRAWL4AI_ENDPOINT")
+    CRAWL4AI_MAX_SESSIONS: int = Field(default=10, env="CRAWL4AI_MAX_SESSIONS")
+    CRAWL4AI_TIMEOUT: int = Field(default=30, env="CRAWL4AI_TIMEOUT")
+
+    # Jina AI Configuration (CRITICAL - Core AI Processing Engine)
     JINA_API_KEY: Optional[str] = Field(default=None, env="JINA_API_KEY")
     JINA_READER_ENDPOINT: str = Field(default="https://r.jina.ai", env="JINA_READER_ENDPOINT")
+    JINA_SEARCH_ENDPOINT: str = Field(default="https://s.jina.ai", env="JINA_SEARCH_ENDPOINT")
+    JINA_EMBEDDINGS_ENDPOINT: str = Field(default="https://api.jina.ai/v1/embeddings", env="JINA_EMBEDDINGS_ENDPOINT")
+    JINA_RERANKER_ENDPOINT: str = Field(default="https://api.jina.ai/v1/rerank", env="JINA_RERANKER_ENDPOINT")
     
     # Proxy Configuration
     PROXY_ROTATION_ENABLED: bool = Field(default=True, env="PROXY_ROTATION_ENABLED")

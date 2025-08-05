@@ -1,0 +1,26 @@
+{
+  "configuration_timestamp": "2025-08-05T15:00:16.469939",
+  "steps": {
+    "api_key_configuration": {
+      "success": true,
+      "timestamp": "2025-08-05T15:01:19.299396"
+    },
+    "integration_validation": {
+      "timestamp": "2025-08-05T15:01:19.301228",
+      "tests": {
+        "initialization": {
+          "status": "error",
+          "error": "1 validation error for Settings\nSECRET_KEY\n  Field required [type=missing, input_value={}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing"
+        }
+      },
+      "overall_status": "failed"
+    },
+    "pdf_pipeline_test": {
+      "status": "error",
+      "error": "1 validation error for Settings\nSECRET_KEY\n  Field required [type=missing, input_value={}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing",
+      "timestamp": "2025-08-05T15:01:20.192973"
+    }
+  },
+  "overall_status": "partial",
+  "message": "Jina AI configuration completed with some limitations"
+}
