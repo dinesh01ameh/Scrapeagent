@@ -111,10 +111,11 @@ class Settings(BaseSettings):
     # Development Settings
     RELOAD_ON_CHANGE: bool = Field(default=True, env="RELOAD_ON_CHANGE")
     ENABLE_CORS: bool = Field(default=True, env="ENABLE_CORS")
-    CORS_ORIGINS: List[str] = Field(
-        default=["http://localhost:3000", "http://localhost:8080"],
-        env="CORS_ORIGINS"
-    )
+    # Temporarily disabled due to parsing issues
+    # CORS_ORIGINS: List[str] = Field(
+    #     default=["http://localhost:3000", "http://localhost:8080"],
+    #     env="CORS_ORIGINS"
+    # )
     
     # Testing Configuration
     TEST_DATABASE_URL: Optional[str] = Field(default=None, env="TEST_DATABASE_URL")
@@ -133,11 +134,14 @@ class Settings(BaseSettings):
             raise ValueError(f"LOG_LEVEL must be one of {valid_levels}")
         return v.upper()
     
-    @validator("CORS_ORIGINS", pre=True)
-    def parse_cors_origins(cls, v):
-        if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",")]
-        return v
+    # Temporarily disabled due to parsing issues
+    # @validator("CORS_ORIGINS", pre=True, always=True)
+    # def parse_cors_origins(cls, v):
+    #     if v is None:
+    #         return ["http://localhost:3000", "http://localhost:8080"]
+    #     if isinstance(v, str):
+    #         return [origin.strip() for origin in v.split(",")]
+    #     return v
     
     def create_directories(self):
         """Create necessary directories if they don't exist"""

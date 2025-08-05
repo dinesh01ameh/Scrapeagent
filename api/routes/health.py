@@ -3,13 +3,22 @@ Health check and monitoring endpoints
 """
 
 from typing import Dict, Any
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from datetime import datetime
 
 from core.scraper import SwissKnifeScraper
-from main import get_scraper
 
 router = APIRouter()
+
+
+# Dependency to get scraper instance
+async def get_scraper() -> SwissKnifeScraper:
+    """Get the initialized scraper instance"""
+    # Import here to avoid circular imports
+    from main import app_state
+    if "scraper" not in app_state:
+        raise HTTPException(status_code=503, detail="Scraper not initialized")
+    return app_state["scraper"]
 
 
 @router.get("/", response_model=Dict[str, Any])

@@ -10,8 +10,8 @@ from typing import Dict, Any, List, Optional, Union
 from datetime import datetime
 
 import httpx
-import ollama
-from ollama import AsyncClient
+# import ollama  # Temporarily commented out due to missing dependency
+# from ollama import AsyncClient  # Temporarily commented out due to missing dependency
 
 from utils.exceptions import LLMError, InitializationError
 
@@ -23,7 +23,15 @@ class LocalLLMManager:
 
     def __init__(self, ollama_endpoint="http://localhost:11434"):
         self.ollama_endpoint = ollama_endpoint
-        self.client = AsyncClient(host=ollama_endpoint)
+        # Temporarily handle missing ollama dependency
+        try:
+            from ollama import AsyncClient
+            self.client = AsyncClient(host=ollama_endpoint)
+            self.ollama_available = True
+        except ImportError:
+            self.client = None
+            self.ollama_available = False
+
         self.available_models = {}
         self.model_capabilities = {
             "llama3.3": {"strength": "general", "context": 8192, "speed": "medium"},
@@ -39,6 +47,11 @@ class LocalLLMManager:
         """Initialize and verify available models"""
         try:
             self.logger.info("🤖 Initializing Local LLM Manager...")
+
+            # Check if ollama is available
+            if not self.ollama_available:
+                self.logger.warning("⚠️ Ollama package not available. Local LLM features disabled.")
+                return
 
             # Check if Ollama is running
             await self._check_ollama_connection()

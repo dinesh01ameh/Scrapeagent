@@ -7,10 +7,19 @@ from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from pydantic import BaseModel, HttpUrl, Field
 
 from core.scraper import SwissKnifeScraper
-from main import get_scraper
 from utils.exceptions import ScrapingError
 
 router = APIRouter()
+
+
+# Dependency to get scraper instance
+async def get_scraper() -> SwissKnifeScraper:
+    """Get the initialized scraper instance"""
+    # Import here to avoid circular imports
+    from main import app_state
+    if "scraper" not in app_state:
+        raise HTTPException(status_code=503, detail="Scraper not initialized")
+    return app_state["scraper"]
 
 
 class ScrapeRequest(BaseModel):
