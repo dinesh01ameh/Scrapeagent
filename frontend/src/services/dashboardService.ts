@@ -1,5 +1,5 @@
 import { apiClient } from './apiClient';
-import { DashboardStats, SystemHealth, ProxyStats } from '@/types';
+import { DashboardStats, SystemHealth, ProxyStats } from '../types';
 
 class DashboardService {
   // Get user dashboard data
@@ -33,12 +33,19 @@ class DashboardService {
   }
 
   // Get usage analytics
-  async getUsageAnalytics(params: {
-    period?: 'day' | 'week' | 'month' | 'year';
-    start_date?: string;
-    end_date?: string;
-  } = {}): Promise<{
-    jobs_over_time: Array<{ date: string; count: number; success_count: number; failed_count: number }>;
+  async getUsageAnalytics(
+    params: {
+      period?: 'day' | 'week' | 'month' | 'year';
+      start_date?: string;
+      end_date?: string;
+    } = {}
+  ): Promise<{
+    jobs_over_time: Array<{
+      date: string;
+      count: number;
+      success_count: number;
+      failed_count: number;
+    }>;
     content_over_time: Array<{ date: string; count: number; size_bytes: number }>;
     top_domains: Array<{ domain: string; count: number; success_rate: number }>;
     content_types: Array<{ type: string; count: number; percentage: number }>;
@@ -51,7 +58,7 @@ class DashboardService {
   }> {
     try {
       const queryParams = new URLSearchParams();
-      
+
       if (params.period) queryParams.append('period', params.period);
       if (params.start_date) queryParams.append('start_date', params.start_date);
       if (params.end_date) queryParams.append('end_date', params.end_date);
@@ -64,14 +71,21 @@ class DashboardService {
   }
 
   // Get recent activity
-  async getRecentActivity(limit: number = 20): Promise<Array<{
-    id: string;
-    type: 'job_created' | 'job_completed' | 'job_failed' | 'project_created' | 'content_extracted';
-    title: string;
-    description: string;
-    timestamp: string;
-    metadata?: Record<string, any>;
-  }>> {
+  async getRecentActivity(limit: number = 20): Promise<
+    Array<{
+      id: string;
+      type:
+        | 'job_created'
+        | 'job_completed'
+        | 'job_failed'
+        | 'project_created'
+        | 'content_extracted';
+      title: string;
+      description: string;
+      timestamp: string;
+      metadata?: Record<string, any>;
+    }>
+  > {
     try {
       const response = await apiClient.get(`/dashboard/activity?limit=${limit}`);
       return response.data!;
@@ -81,18 +95,25 @@ class DashboardService {
   }
 
   // Get performance metrics
-  async getPerformanceMetrics(params: {
-    period?: 'hour' | 'day' | 'week';
-    hours?: number;
-  } = {}): Promise<{
-    response_times: Array<{ timestamp: string; avg_time: number; p95_time: number; p99_time: number }>;
+  async getPerformanceMetrics(
+    params: {
+      period?: 'hour' | 'day' | 'week';
+      hours?: number;
+    } = {}
+  ): Promise<{
+    response_times: Array<{
+      timestamp: string;
+      avg_time: number;
+      p95_time: number;
+      p99_time: number;
+    }>;
     throughput: Array<{ timestamp: string; requests_per_second: number }>;
     error_rates: Array<{ timestamp: string; error_rate: number; total_requests: number }>;
     resource_usage: Array<{ timestamp: string; cpu_percent: number; memory_percent: number }>;
   }> {
     try {
       const queryParams = new URLSearchParams();
-      
+
       if (params.period) queryParams.append('period', params.period);
       if (params.hours) queryParams.append('hours', params.hours.toString());
 
@@ -137,16 +158,18 @@ class DashboardService {
   }
 
   // Get alerts and notifications
-  async getAlerts(): Promise<Array<{
-    id: string;
-    type: 'info' | 'warning' | 'error' | 'success';
-    title: string;
-    message: string;
-    timestamp: string;
-    read: boolean;
-    action_url?: string;
-    action_text?: string;
-  }>> {
+  async getAlerts(): Promise<
+    Array<{
+      id: string;
+      type: 'info' | 'warning' | 'error' | 'success';
+      title: string;
+      message: string;
+      timestamp: string;
+      read: boolean;
+      action_url?: string;
+      action_text?: string;
+    }>
+  > {
     try {
       const response = await apiClient.get('/dashboard/alerts');
       return response.data!;

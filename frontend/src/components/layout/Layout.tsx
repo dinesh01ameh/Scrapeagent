@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { Box, CssBaseline, Toolbar } from '@mui/material';
-import { useAppSelector } from '@/store';
+import { useAppSelector } from '../../store';
 import Sidebar from './Sidebar';
 import Header from './Header';
 
@@ -13,13 +13,13 @@ const Layout: React.FC = () => {
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
-      
+
       {/* Header */}
       <Header drawerWidth={DRAWER_WIDTH} />
-      
+
       {/* Sidebar */}
       <Sidebar drawerWidth={DRAWER_WIDTH} />
-      
+
       {/* Main Content */}
       <Box
         component="main"

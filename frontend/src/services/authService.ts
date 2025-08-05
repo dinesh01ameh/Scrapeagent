@@ -1,5 +1,5 @@
 import { apiClient } from './apiClient';
-import { User, Session, LoginForm, RegisterForm } from '@/types';
+import { User, Session, LoginForm, RegisterForm } from '../types';
 
 interface AuthResponse {
   user: User;
@@ -28,7 +28,7 @@ class AuthService {
     try {
       // Remove confirmPassword before sending to API
       const { confirmPassword, ...registrationData } = userData;
-      
+
       const response = await apiClient.post<AuthResponse>('/auth/register', registrationData);
       return response.data!;
     } catch (error: any) {

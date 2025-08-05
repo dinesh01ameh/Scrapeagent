@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { UIState, Notification } from '@/types';
+import { UIState, Notification } from '../../types';
 
 const initialState: UIState = {
   sidebarOpen: true,
@@ -24,7 +24,10 @@ const uiSlice = createSlice({
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
-    addNotification: (state, action: PayloadAction<Omit<Notification, 'id' | 'timestamp' | 'read'>>) => {
+    addNotification: (
+      state,
+      action: PayloadAction<Omit<Notification, 'id' | 'timestamp' | 'read'>>
+    ) => {
       const notification: Notification = {
         ...action.payload,
         id: Date.now().toString(),
@@ -32,25 +35,25 @@ const uiSlice = createSlice({
         read: false,
       };
       state.notifications.unshift(notification);
-      
+
       // Keep only last 50 notifications
       if (state.notifications.length > 50) {
         state.notifications = state.notifications.slice(0, 50);
       }
     },
     markNotificationRead: (state, action: PayloadAction<string>) => {
-      const notification = state.notifications.find(n => n.id === action.payload);
+      const notification = state.notifications.find((n) => n.id === action.payload);
       if (notification) {
         notification.read = true;
       }
     },
     markAllNotificationsRead: (state) => {
-      state.notifications.forEach(notification => {
+      state.notifications.forEach((notification) => {
         notification.read = true;
       });
     },
     removeNotification: (state, action: PayloadAction<string>) => {
-      state.notifications = state.notifications.filter(n => n.id !== action.payload);
+      state.notifications = state.notifications.filter((n) => n.id !== action.payload);
     },
     clearNotifications: (state) => {
       state.notifications = [];

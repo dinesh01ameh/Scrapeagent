@@ -6,19 +6,19 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { Toaster } from 'react-hot-toast';
 
-import { store } from '@/store';
-import { AuthProvider } from '@/contexts/AuthContext';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import Layout from '@/components/layout/Layout';
+import { store } from './store';
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import Layout from './components/layout/Layout';
 
 // Pages
-import LoginPage from '@/pages/auth/LoginPage';
-import RegisterPage from '@/pages/auth/RegisterPage';
-import DashboardPage from '@/pages/dashboard/DashboardPage';
-import ProjectsPage from '@/pages/projects/ProjectsPage';
-import JobsPage from '@/pages/jobs/JobsPage';
-import ContentPage from '@/pages/content/ContentPage';
-import SettingsPage from '@/pages/settings/SettingsPage';
+import LoginPage from './pages/auth/LoginPage';
+import RegisterPage from './pages/auth/RegisterPage';
+import DashboardPage from './pages/dashboard/DashboardPage';
+import ProjectsPage from './pages/projects/ProjectsPage';
+import JobsPage from './pages/jobs/JobsPage';
+import ContentPage from './pages/content/ContentPage';
+import SettingsPage from './pages/settings/SettingsPage';
 
 // Create React Query client
 const queryClient = new QueryClient({
@@ -93,7 +93,7 @@ const App: React.FC = () => {
                   {/* Public routes */}
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
-                  
+
                   {/* Protected routes */}
                   <Route
                     path="/"
@@ -110,14 +110,14 @@ const App: React.FC = () => {
                     <Route path="content" element={<ContentPage />} />
                     <Route path="settings" element={<SettingsPage />} />
                   </Route>
-                  
+
                   {/* Catch all route */}
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
               </div>
             </Router>
           </AuthProvider>
-          
+
           {/* Toast notifications */}
           <Toaster
             position="top-right"

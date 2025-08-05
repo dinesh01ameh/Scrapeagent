@@ -42,13 +42,14 @@ services:
     environment:
       - DEBUG=true
       - ENVIRONMENT=development
+      - SECRET_KEY=your-secret-key-here-change-in-production
       - REDIS_URL=redis://redis:6379
       - DATABASE_URL=postgresql://postgres:password@postgres:5432/swissknife
       - OLLAMA_ENDPOINT=http://ollama:11434
       - API_HOST=0.0.0.0
       - API_PORT=8601
-      # CORS settings for frontend
-      - CORS_ORIGINS=http://localhost:8650,http://frontend:80
+      # CORS settings for frontend (temporarily disabled)
+      # - CORS_ORIGINS=http://localhost:8650,http://frontend:80
     volumes:
       # Mount source code for development hot reload
       - .:/app

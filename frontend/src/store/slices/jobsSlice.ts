@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { ScrapingJob, JobForm } from '@/types';
-import { jobService } from '@/services/jobService';
+import { ScrapingJob, JobForm } from '../../types';
+import { jobService } from '../../services/jobService';
 
 interface JobsState {
   jobs: ScrapingJob[];
@@ -31,13 +31,16 @@ const initialState: JobsState = {
 // Async thunks
 export const fetchJobs = createAsyncThunk(
   'jobs/fetchJobs',
-  async (params: { 
-    page?: number; 
-    limit?: number; 
-    status?: string; 
-    project_id?: string; 
-    search?: string;
-  } = {}, { rejectWithValue }) => {
+  async (
+    params: {
+      page?: number;
+      limit?: number;
+      status?: string;
+      project_id?: string;
+      search?: string;
+    } = {},
+    { rejectWithValue }
+  ) => {
     try {
       const response = await jobService.getJobs(params);
       return response;
@@ -138,10 +141,13 @@ const jobsSlice = createSlice({
       state.hasMore = true;
       state.totalCount = 0;
     },
-    updateJobStatus: (state, action: PayloadAction<{ id: string; status: string; error_message?: string }>) => {
+    updateJobStatus: (
+      state,
+      action: PayloadAction<{ id: string; status: string; error_message?: string }>
+    ) => {
       const { id, status, error_message } = action.payload;
-      const job = state.jobs.find(j => j.id === id);
-      
+      const job = state.jobs.find((j) => j.id === id);
+
       if (job) {
         job.status = status as any;
         if (error_message) {
@@ -153,7 +159,7 @@ const jobsSlice = createSlice({
           job.completed_at = new Date().toISOString();
         }
       }
-      
+
       if (state.currentJob?.id === id) {
         state.currentJob = { ...state.currentJob, status: status as any };
         if (error_message) {
@@ -172,13 +178,13 @@ const jobsSlice = createSlice({
       .addCase(fetchJobs.fulfilled, (state, action) => {
         state.loading = false;
         const { data, total, page, has_next } = action.payload;
-        
+
         if (page === 1) {
           state.jobs = data;
         } else {
           state.jobs = [...state.jobs, ...data];
         }
-        
+
         state.totalCount = total;
         state.currentPage = page;
         state.hasMore = has_next;
@@ -223,70 +229,61 @@ const jobsSlice = createSlice({
       });
 
     // Update Job
-    builder
-      .addCase(updateJob.fulfilled, (state, action) => {
-        const updatedJob = action.payload;
-        const index = state.jobs.findIndex(j => j.id === updatedJob.id);
-        
-        if (index !== -1) {
-          state.jobs[index] = updatedJob;
-        }
-        
-        if (state.currentJob?.id === updatedJob.id) {
-          state.currentJob = updatedJob;
-        }
-      });
+    builder.addCase(updateJob.fulfilled, (state, action) => {
+      const updatedJob = action.payload;
+      const index = state.jobs.findIndex((j) => j.id === updatedJob.id);
+
+      if (index !== -1) {
+        state.jobs[index] = updatedJob;
+      }
+
+      if (state.currentJob?.id === updatedJob.id) {
+        state.currentJob = updatedJob;
+      }
+    });
 
     // Delete Job
-    builder
-      .addCase(deleteJob.fulfilled, (state, action) => {
-        const deletedId = action.payload;
-        state.jobs = state.jobs.filter(j => j.id !== deletedId);
-        state.totalCount -= 1;
-        
-        if (state.currentJob?.id === deletedId) {
-          state.currentJob = null;
-        }
-      });
+    builder.addCase(deleteJob.fulfilled, (state, action) => {
+      const deletedId = action.payload;
+      state.jobs = state.jobs.filter((j) => j.id !== deletedId);
+      state.totalCount -= 1;
+
+      if (state.currentJob?.id === deletedId) {
+        state.currentJob = null;
+      }
+    });
 
     // Cancel Job
-    builder
-      .addCase(cancelJob.fulfilled, (state, action) => {
-        const updatedJob = action.payload;
-        const index = state.jobs.findIndex(j => j.id === updatedJob.id);
-        
-        if (index !== -1) {
-          state.jobs[index] = updatedJob;
-        }
-        
-        if (state.currentJob?.id === updatedJob.id) {
-          state.currentJob = updatedJob;
-        }
-      });
+    builder.addCase(cancelJob.fulfilled, (state, action) => {
+      const updatedJob = action.payload;
+      const index = state.jobs.findIndex((j) => j.id === updatedJob.id);
+
+      if (index !== -1) {
+        state.jobs[index] = updatedJob;
+      }
+
+      if (state.currentJob?.id === updatedJob.id) {
+        state.currentJob = updatedJob;
+      }
+    });
 
     // Retry Job
-    builder
-      .addCase(retryJob.fulfilled, (state, action) => {
-        const updatedJob = action.payload;
-        const index = state.jobs.findIndex(j => j.id === updatedJob.id);
-        
-        if (index !== -1) {
-          state.jobs[index] = updatedJob;
-        }
-        
-        if (state.currentJob?.id === updatedJob.id) {
-          state.currentJob = updatedJob;
-        }
-      });
+    builder.addCase(retryJob.fulfilled, (state, action) => {
+      const updatedJob = action.payload;
+      const index = state.jobs.findIndex((j) => j.id === updatedJob.id);
+
+      if (index !== -1) {
+        state.jobs[index] = updatedJob;
+      }
+
+      if (state.currentJob?.id === updatedJob.id) {
+        state.currentJob = updatedJob;
+      }
+    });
   },
 });
 
-export const { 
-  clearError, 
-  setCurrentJob, 
-  setFilters, 
-  resetJobs, 
-  updateJobStatus 
-} = jobsSlice.actions;
+export const { clearError, setCurrentJob, setFilters, resetJobs, updateJobStatus } =
+  jobsSlice.actions;
 
 export default jobsSlice.reducer;

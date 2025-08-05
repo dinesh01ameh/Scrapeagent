@@ -17,17 +17,14 @@ import {
   InputAdornment,
 } from '@mui/material';
 import { Visibility, VisibilityOff, Login as LoginIcon } from '@mui/icons-material';
-import { useAppDispatch, useAppSelector } from '@/store';
-import { loginUser, clearError } from '@/store/slices/authSlice';
-import { LoginForm } from '@/types';
+import { useAppDispatch, useAppSelector } from '../../store';
+import { loginUser, clearError } from '../../store/slices/authSlice';
+import { LoginForm } from '../../types';
 import { toast } from 'react-hot-toast';
 
 // Validation schema
 const loginSchema = yup.object({
-  email: yup
-    .string()
-    .email('Please enter a valid email address')
-    .required('Email is required'),
+  email: yup.string().email('Please enter a valid email address').required('Email is required'),
   password: yup
     .string()
     .min(6, 'Password must be at least 6 characters')

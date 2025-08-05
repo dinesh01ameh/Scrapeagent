@@ -21,10 +21,10 @@ import {
   Logout,
   Person,
 } from '@mui/icons-material';
-import { useAppDispatch, useAppSelector } from '@/store';
-import { toggleSidebar } from '@/store/slices/uiSlice';
-import { logoutUser } from '@/store/slices/authSlice';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAppDispatch, useAppSelector } from '../../store';
+import { toggleSidebar } from '../../store/slices/uiSlice';
+import { logoutUser } from '../../store/slices/authSlice';
+import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 
 interface HeaderProps {
@@ -35,11 +35,11 @@ const Header: React.FC<HeaderProps> = ({ drawerWidth }) => {
   const dispatch = useAppDispatch();
   const { user } = useAuth();
   const { sidebarOpen, notifications } = useAppSelector((state) => state.ui);
-  
+
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [notificationAnchorEl, setNotificationAnchorEl] = React.useState<null | HTMLElement>(null);
 
-  const unreadNotifications = notifications.filter(n => !n.read).length;
+  const unreadNotifications = notifications.filter((n) => !n.read).length;
 
   const handleDrawerToggle = () => {
     dispatch(toggleSidebar());
@@ -74,7 +74,7 @@ const Header: React.FC<HeaderProps> = ({ drawerWidth }) => {
   const getInitials = (name: string) => {
     return name
       .split(' ')
-      .map(word => word.charAt(0))
+      .map((word) => word.charAt(0))
       .join('')
       .toUpperCase()
       .slice(0, 2);
@@ -206,7 +206,7 @@ const Header: React.FC<HeaderProps> = ({ drawerWidth }) => {
         open={Boolean(notificationAnchorEl)}
         onClose={handleNotificationMenuClose}
         PaperProps={{
-          sx: { width: 320, maxHeight: 400 }
+          sx: { width: 320, maxHeight: 400 },
         }}
       >
         <Box sx={{ px: 2, py: 1 }}>

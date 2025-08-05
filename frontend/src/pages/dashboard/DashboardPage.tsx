@@ -28,8 +28,8 @@ import {
 } from '@mui/icons-material';
 import { useQuery } from 'react-query';
 import { useNavigate } from 'react-router-dom';
-import { dashboardService } from '@/services/dashboardService';
-import { useAuth } from '@/contexts/AuthContext';
+import { dashboardService } from '../../services/dashboardService';
+import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 
 const DashboardPage: React.FC = () => {
@@ -47,13 +47,9 @@ const DashboardPage: React.FC = () => {
   });
 
   // Fetch system health
-  const { data: systemHealth } = useQuery(
-    'systemHealth',
-    dashboardService.getSystemHealth,
-    {
-      refetchInterval: 60000, // Refetch every minute
-    }
-  );
+  const { data: systemHealth } = useQuery('systemHealth', dashboardService.getSystemHealth, {
+    refetchInterval: 60000, // Refetch every minute
+  });
 
   useEffect(() => {
     if (error) {
@@ -241,9 +237,7 @@ const DashboardPage: React.FC = () => {
                   <Typography color="text.secondary" gutterBottom>
                     Success Rate
                   </Typography>
-                  <Typography variant="h4">
-                    {Math.round(stats.success_rate * 100)}%
-                  </Typography>
+                  <Typography variant="h4">{Math.round(stats.success_rate * 100)}%</Typography>
                 </Box>
                 <Avatar sx={{ bgcolor: 'success.main' }}>
                   <CheckCircle />
@@ -358,14 +352,12 @@ const DashboardPage: React.FC = () => {
                           secondary={`${content.url} • ${new Date(content.created_at).toLocaleDateString()}`}
                         />
                         {content.content_type && (
-                          <Chip
-                            label={content.content_type}
-                            size="small"
-                            variant="outlined"
-                          />
+                          <Chip label={content.content_type} size="small" variant="outlined" />
                         )}
                       </ListItem>
-                      {index < recentContent.length - 1 && <Divider variant="inset" component="li" />}
+                      {index < recentContent.length - 1 && (
+                        <Divider variant="inset" component="li" />
+                      )}
                     </React.Fragment>
                   ))
                 )}

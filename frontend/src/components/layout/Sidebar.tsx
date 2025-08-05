@@ -23,7 +23,7 @@ import {
   Speed,
   CloudQueue,
 } from '@mui/icons-material';
-import { useAppSelector } from '@/store';
+import { useAppSelector } from '../../store';
 
 interface SidebarProps {
   drawerWidth: number;

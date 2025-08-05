@@ -145,6 +145,7 @@ export interface RegisterForm {
   confirmPassword: string;
   username?: string;
   full_name?: string;
+  terms?: boolean;
 }
 
 export interface ProjectForm {
@@ -191,16 +192,19 @@ export interface ProxyStats {
   failed_requests: number;
   average_response_time: number;
   overall_success_rate: number;
-  pools: Record<string, {
-    count: number;
-    healthy: number;
-    unhealthy: number;
-    total_requests: number;
-    successful_requests: number;
-    failed_requests: number;
-    average_response_time: number;
-    success_rate: number;
-  }>;
+  pools: Record<
+    string,
+    {
+      count: number;
+      healthy: number;
+      unhealthy: number;
+      total_requests: number;
+      successful_requests: number;
+      failed_requests: number;
+      average_response_time: number;
+      success_rate: number;
+    }
+  >;
 }
 
 // System Health Types

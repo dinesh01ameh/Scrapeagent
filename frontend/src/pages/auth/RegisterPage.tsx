@@ -19,17 +19,14 @@ import {
   FormControlLabel,
 } from '@mui/material';
 import { Visibility, VisibilityOff, PersonAdd as RegisterIcon } from '@mui/icons-material';
-import { useAppDispatch, useAppSelector } from '@/store';
-import { registerUser, clearError } from '@/store/slices/authSlice';
-import { RegisterForm } from '@/types';
+import { useAppDispatch, useAppSelector } from '../../store';
+import { registerUser, clearError } from '../../store/slices/authSlice';
+import { RegisterForm } from '../../types';
 import { toast } from 'react-hot-toast';
 
 // Validation schema
 const registerSchema = yup.object({
-  email: yup
-    .string()
-    .email('Please enter a valid email address')
-    .required('Email is required'),
+  email: yup.string().email('Please enter a valid email address').required('Email is required'),
   password: yup
     .string()
     .min(8, 'Password must be at least 8 characters')
@@ -51,9 +48,7 @@ const registerSchema = yup.object({
     .string()
     .min(2, 'Full name must be at least 2 characters')
     .max(50, 'Full name must be less than 50 characters'),
-  terms: yup
-    .boolean()
-    .oneOf([true], 'You must accept the terms and conditions'),
+  terms: yup.boolean().oneOf([true], 'You must accept the terms and conditions'),
 });
 
 const RegisterPage: React.FC = () => {
@@ -66,7 +61,7 @@ const RegisterPage: React.FC = () => {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<RegisterForm & { terms: boolean }>({
+  } = useForm<RegisterForm>({
     resolver: yupResolver(registerSchema),
   });
 
@@ -87,7 +82,7 @@ const RegisterPage: React.FC = () => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const onSubmit = async (data: RegisterForm & { terms: boolean }) => {
+  const onSubmit = async (data: RegisterForm) => {
     try {
       const { terms, ...registerData } = data;
       await dispatch(registerUser(registerData)).unwrap();

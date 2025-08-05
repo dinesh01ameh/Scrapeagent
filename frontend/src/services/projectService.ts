@@ -1,17 +1,19 @@
 import { apiClient } from './apiClient';
-import { Project, ProjectForm, PaginatedResponse } from '@/types';
+import { Project, ProjectForm, PaginatedResponse } from '../types';
 
 class ProjectService {
   // Get all projects with pagination and filtering
-  async getProjects(params: {
-    page?: number;
-    limit?: number;
-    search?: string;
-    status?: string;
-  } = {}): Promise<PaginatedResponse<Project>> {
+  async getProjects(
+    params: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      status?: string;
+    } = {}
+  ): Promise<PaginatedResponse<Project>> {
     try {
       const queryParams = new URLSearchParams();
-      
+
       if (params.page) queryParams.append('page', params.page.toString());
       if (params.limit) queryParams.append('limit', params.limit.toString());
       if (params.search) queryParams.append('search', params.search);
@@ -87,7 +89,7 @@ class ProjectService {
   async archiveProject(projectId: string): Promise<Project> {
     try {
       const response = await apiClient.patch<Project>(`/projects/${projectId}`, {
-        status: 'archived'
+        status: 'archived',
       });
       return response.data!;
     } catch (error: any) {
@@ -99,7 +101,7 @@ class ProjectService {
   async restoreProject(projectId: string): Promise<Project> {
     try {
       const response = await apiClient.patch<Project>(`/projects/${projectId}`, {
-        status: 'active'
+        status: 'active',
       });
       return response.data!;
     } catch (error: any) {
@@ -111,7 +113,7 @@ class ProjectService {
   async duplicateProject(projectId: string, newName: string): Promise<Project> {
     try {
       const response = await apiClient.post<Project>(`/projects/${projectId}/duplicate`, {
-        name: newName
+        name: newName,
       });
       return response.data!;
     } catch (error: any) {
@@ -130,20 +132,25 @@ class ProjectService {
   }
 
   // Get project activity log
-  async getProjectActivity(projectId: string, params: {
-    page?: number;
-    limit?: number;
-  } = {}): Promise<PaginatedResponse<{
-    id: string;
-    action: string;
-    description: string;
-    timestamp: string;
-    user_id: string;
-    metadata?: Record<string, any>;
-  }>> {
+  async getProjectActivity(
+    projectId: string,
+    params: {
+      page?: number;
+      limit?: number;
+    } = {}
+  ): Promise<
+    PaginatedResponse<{
+      id: string;
+      action: string;
+      description: string;
+      timestamp: string;
+      user_id: string;
+      metadata?: Record<string, any>;
+    }>
+  > {
     try {
       const queryParams = new URLSearchParams();
-      
+
       if (params.page) queryParams.append('page', params.page.toString());
       if (params.limit) queryParams.append('limit', params.limit.toString());
 
@@ -160,7 +167,7 @@ class ProjectService {
   async updateProjectSettings(projectId: string, settings: Record<string, any>): Promise<Project> {
     try {
       const response = await apiClient.patch<Project>(`/projects/${projectId}/settings`, {
-        settings
+        settings,
       });
       return response.data!;
     } catch (error: any) {
@@ -169,13 +176,15 @@ class ProjectService {
   }
 
   // Get project templates
-  async getProjectTemplates(): Promise<{
-    id: string;
-    name: string;
-    description: string;
-    settings: Record<string, any>;
-    category: string;
-  }[]> {
+  async getProjectTemplates(): Promise<
+    {
+      id: string;
+      name: string;
+      description: string;
+      settings: Record<string, any>;
+      category: string;
+    }[]
+  > {
     try {
       const response = await apiClient.get('/projects/templates');
       return response.data!;
@@ -185,14 +194,17 @@ class ProjectService {
   }
 
   // Create project from template
-  async createFromTemplate(templateId: string, projectData: {
-    name: string;
-    description?: string;
-  }): Promise<Project> {
+  async createFromTemplate(
+    templateId: string,
+    projectData: {
+      name: string;
+      description?: string;
+    }
+  ): Promise<Project> {
     try {
       const response = await apiClient.post<Project>('/projects/from-template', {
         template_id: templateId,
-        ...projectData
+        ...projectData,
       });
       return response.data!;
     } catch (error: any) {

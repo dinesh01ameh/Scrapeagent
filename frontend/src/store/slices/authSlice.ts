@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { AuthState, User, Session, LoginForm, RegisterForm } from '@/types';
-import { authService } from '@/services/authService';
+import { AuthState, User, Session, LoginForm, RegisterForm } from '../../types';
+import { authService } from '../../services/authService';
 
 const initialState: AuthState = {
   user: null,
@@ -44,11 +44,11 @@ export const validateToken = createAsyncThunk(
     try {
       const state = getState() as { auth: AuthState };
       const token = state.auth.token;
-      
+
       if (!token) {
         throw new Error('No token found');
       }
-      
+
       const response = await authService.validateToken(token);
       return response;
     } catch (error: any) {
@@ -58,24 +58,21 @@ export const validateToken = createAsyncThunk(
   }
 );
 
-export const logoutUser = createAsyncThunk(
-  'auth/logout',
-  async (_, { getState }) => {
-    try {
-      const state = getState() as { auth: AuthState };
-      const token = state.auth.token;
-      
-      if (token) {
-        await authService.logout(token);
-      }
-    } catch (error) {
-      // Continue with logout even if API call fails
-      console.error('Logout API call failed:', error);
-    } finally {
-      localStorage.removeItem('token');
+export const logoutUser = createAsyncThunk('auth/logout', async (_, { getState }) => {
+  try {
+    const state = getState() as { auth: AuthState };
+    const token = state.auth.token;
+
+    if (token) {
+      await authService.logout(token);
     }
+  } catch (error) {
+    // Continue with logout even if API call fails
+    console.error('Logout API call failed:', error);
+  } finally {
+    localStorage.removeItem('token');
   }
-);
+});
 
 export const refreshToken = createAsyncThunk(
   'auth/refreshToken',
@@ -83,11 +80,11 @@ export const refreshToken = createAsyncThunk(
     try {
       const state = getState() as { auth: AuthState };
       const currentToken = state.auth.token;
-      
+
       if (!currentToken) {
         throw new Error('No token to refresh');
       }
-      
+
       const response = await authService.refreshToken(currentToken);
       localStorage.setItem('token', response.token);
       return response;
@@ -177,15 +174,14 @@ const authSlice = createSlice({
       });
 
     // Logout
-    builder
-      .addCase(logoutUser.fulfilled, (state) => {
-        state.user = null;
-        state.session = null;
-        state.token = null;
-        state.isAuthenticated = false;
-        state.error = null;
-        state.isLoading = false;
-      });
+    builder.addCase(logoutUser.fulfilled, (state) => {
+      state.user = null;
+      state.session = null;
+      state.token = null;
+      state.isAuthenticated = false;
+      state.error = null;
+      state.isLoading = false;
+    });
 
     // Refresh Token
     builder

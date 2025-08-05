@@ -38,10 +38,15 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { useAppDispatch } from '@/store';
-import { fetchProjects, createProject, updateProject, deleteProject } from '@/store/slices/projectsSlice';
-import { projectService } from '@/services/projectService';
-import { Project, ProjectForm } from '@/types';
+import { useAppDispatch } from '../../store';
+import {
+  fetchProjects,
+  createProject,
+  updateProject,
+  deleteProject,
+} from '../../store/slices/projectsSlice';
+import { projectService } from '../../services/projectService';
+import { Project, ProjectForm } from '../../types';
 import { toast } from 'react-hot-toast';
 
 // Validation schema
@@ -51,16 +56,14 @@ const projectSchema = yup.object({
     .required('Project name is required')
     .min(3, 'Project name must be at least 3 characters')
     .max(100, 'Project name must be less than 100 characters'),
-  description: yup
-    .string()
-    .max(500, 'Description must be less than 500 characters'),
+  description: yup.string().max(500, 'Description must be less than 500 characters'),
 });
 
 const ProjectsPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  
+
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -266,12 +269,7 @@ const ProjectsPage: React.FC = () => {
             Organize your scraping tasks into projects for better management.
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={handleCreateProject}
-          size="large"
-        >
+        <Button variant="contained" startIcon={<Add />} onClick={handleCreateProject} size="large">
           New Project
         </Button>
       </Box>
@@ -302,18 +300,15 @@ const ProjectsPage: React.FC = () => {
                     <Typography variant="h6" noWrap>
                       {project.name}
                     </Typography>
-                    <IconButton
-                      size="small"
-                      onClick={(e) => handleMenuOpen(e, project)}
-                    >
+                    <IconButton size="small" onClick={(e) => handleMenuOpen(e, project)}>
                       <MoreVert />
                     </IconButton>
                   </Box>
-                  
+
                   <Typography variant="body2" color="text.secondary" mb={2}>
                     {project.description || 'No description provided'}
                   </Typography>
-                  
+
                   <Box display="flex" alignItems="center" gap={1} mb={2}>
                     <Chip
                       label={project.status}
@@ -326,12 +321,16 @@ const ProjectsPage: React.FC = () => {
                     </Typography>
                   </Box>
                 </CardContent>
-                
+
                 <CardActions>
                   <Button size="small" startIcon={<Schedule />}>
                     View Jobs
                   </Button>
-                  <Button size="small" startIcon={<Edit />} onClick={() => handleEditProject(project)}>
+                  <Button
+                    size="small"
+                    startIcon={<Edit />}
+                    onClick={() => handleEditProject(project)}
+                  >
                     Edit
                   </Button>
                 </CardActions>
@@ -342,11 +341,7 @@ const ProjectsPage: React.FC = () => {
       )}
 
       {/* Project Menu */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-      >
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
         <MenuItem onClick={() => menuProject && handleEditProject(menuProject)}>
           <Edit fontSize="small" sx={{ mr: 1 }} />
           Edit
@@ -371,7 +366,12 @@ const ProjectsPage: React.FC = () => {
       </Menu>
 
       {/* Create Project Dialog */}
-      <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={createDialogOpen}
+        onClose={() => setCreateDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Create New Project</DialogTitle>
         <form onSubmit={handleSubmit(onCreateSubmit)}>
           <DialogContent>
@@ -409,7 +409,12 @@ const ProjectsPage: React.FC = () => {
       </Dialog>
 
       {/* Edit Project Dialog */}
-      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Edit Project</DialogTitle>
         <form onSubmit={handleSubmit(onEditSubmit)}>
           <DialogContent>

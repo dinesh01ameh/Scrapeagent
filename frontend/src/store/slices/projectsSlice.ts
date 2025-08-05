@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { Project, ProjectForm } from '@/types';
-import { projectService } from '@/services/projectService';
+import { Project, ProjectForm } from '../../types';
+import { projectService } from '../../services/projectService';
 
 interface ProjectsState {
   projects: Project[];
@@ -110,13 +110,13 @@ const projectsSlice = createSlice({
       .addCase(fetchProjects.fulfilled, (state, action) => {
         state.loading = false;
         const { data, total, page, has_next } = action.payload;
-        
+
         if (page === 1) {
           state.projects = data;
         } else {
           state.projects = [...state.projects, ...data];
         }
-        
+
         state.totalCount = total;
         state.currentPage = page;
         state.hasMore = has_next;
@@ -169,16 +169,16 @@ const projectsSlice = createSlice({
       .addCase(updateProject.fulfilled, (state, action) => {
         state.loading = false;
         const updatedProject = action.payload;
-        const index = state.projects.findIndex(p => p.id === updatedProject.id);
-        
+        const index = state.projects.findIndex((p) => p.id === updatedProject.id);
+
         if (index !== -1) {
           state.projects[index] = updatedProject;
         }
-        
+
         if (state.currentProject?.id === updatedProject.id) {
           state.currentProject = updatedProject;
         }
-        
+
         state.error = null;
       })
       .addCase(updateProject.rejected, (state, action) => {
@@ -195,13 +195,13 @@ const projectsSlice = createSlice({
       .addCase(deleteProject.fulfilled, (state, action) => {
         state.loading = false;
         const deletedId = action.payload;
-        state.projects = state.projects.filter(p => p.id !== deletedId);
+        state.projects = state.projects.filter((p) => p.id !== deletedId);
         state.totalCount -= 1;
-        
+
         if (state.currentProject?.id === deletedId) {
           state.currentProject = null;
         }
-        
+
         state.error = null;
       })
       .addCase(deleteProject.rejected, (state, action) => {

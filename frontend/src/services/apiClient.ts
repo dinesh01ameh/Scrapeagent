@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { ApiResponse } from '@/types';
+import { ApiResponse } from '../types';
 
 class ApiClient {
   private client: AxiosInstance;
@@ -7,7 +7,7 @@ class ApiClient {
 
   constructor() {
     this.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:8601';
-    
+
     this.client = axios.create({
       baseURL: this.baseURL,
       timeout: 30000,
@@ -52,10 +52,10 @@ class ApiClient {
             if (token) {
               const refreshResponse = await this.post('/auth/refresh', { token });
               const newToken = refreshResponse.data.token;
-              
+
               localStorage.setItem('token', newToken);
               originalRequest.headers.Authorization = `Bearer ${newToken}`;
-              
+
               return this.client(originalRequest);
             }
           } catch (refreshError) {
@@ -72,7 +72,8 @@ class ApiClient {
         }
 
         // Handle API errors
-        const apiError = error.response.data?.error || error.response.data?.message || error.message;
+        const apiError =
+          error.response.data?.error || error.response.data?.message || error.message;
         return Promise.reject(new Error(apiError));
       }
     );
@@ -93,15 +94,27 @@ class ApiClient {
     return this.request<T>({ ...config, method: 'GET', url });
   }
 
-  async post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  async post<T = any>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<ApiResponse<T>> {
     return this.request<T>({ ...config, method: 'POST', url, data });
   }
 
-  async put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  async put<T = any>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<ApiResponse<T>> {
     return this.request<T>({ ...config, method: 'PUT', url, data });
   }
 
-  async patch<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  async patch<T = any>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<ApiResponse<T>> {
     return this.request<T>({ ...config, method: 'PATCH', url, data });
   }
 
@@ -111,8 +124,8 @@ class ApiClient {
 
   // File upload method
   async uploadFile<T = any>(
-    url: string, 
-    file: File, 
+    url: string,
+    file: File,
     onUploadProgress?: (progressEvent: any) => void
   ): Promise<ApiResponse<T>> {
     const formData = new FormData();
@@ -139,12 +152,12 @@ class ApiClient {
       const blob = new Blob([response.data]);
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      
+
       link.href = downloadUrl;
       link.download = filename || 'download';
       document.body.appendChild(link);
       link.click();
-      
+
       document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
     } catch (error: any) {

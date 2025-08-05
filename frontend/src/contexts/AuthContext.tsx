@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, ReactNode } from 'react';
-import { useAppDispatch, useAppSelector } from '@/store';
-import { validateToken, clearError } from '@/store/slices/authSlice';
-import { User, Session } from '@/types';
+import { useAppDispatch, useAppSelector } from '../store';
+import { validateToken, clearError } from '../store/slices/authSlice';
+import { User, Session } from '../types';
 
 interface AuthContextType {
   user: User | null;
@@ -44,11 +44,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     clearError: handleClearError,
   };
 
-  return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = (): AuthContextType => {

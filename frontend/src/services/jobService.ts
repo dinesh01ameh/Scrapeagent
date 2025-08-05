@@ -1,18 +1,20 @@
 import { apiClient } from './apiClient';
-import { ScrapingJob, JobForm, PaginatedResponse, ScrapedContent } from '@/types';
+import { ScrapingJob, JobForm, PaginatedResponse, ScrapedContent } from '../types';
 
 class JobService {
   // Get all jobs with pagination and filtering
-  async getJobs(params: {
-    page?: number;
-    limit?: number;
-    status?: string;
-    project_id?: string;
-    search?: string;
-  } = {}): Promise<PaginatedResponse<ScrapingJob>> {
+  async getJobs(
+    params: {
+      page?: number;
+      limit?: number;
+      status?: string;
+      project_id?: string;
+      search?: string;
+    } = {}
+  ): Promise<PaginatedResponse<ScrapingJob>> {
     try {
       const queryParams = new URLSearchParams();
-      
+
       if (params.page) queryParams.append('page', params.page.toString());
       if (params.limit) queryParams.append('limit', params.limit.toString());
       if (params.status) queryParams.append('status', params.status);
@@ -88,13 +90,16 @@ class JobService {
   }
 
   // Get job results/content
-  async getJobResults(jobId: string, params: {
-    page?: number;
-    limit?: number;
-  } = {}): Promise<PaginatedResponse<ScrapedContent>> {
+  async getJobResults(
+    jobId: string,
+    params: {
+      page?: number;
+      limit?: number;
+    } = {}
+  ): Promise<PaginatedResponse<ScrapedContent>> {
     try {
       const queryParams = new URLSearchParams();
-      
+
       if (params.page) queryParams.append('page', params.page.toString());
       if (params.limit) queryParams.append('limit', params.limit.toString());
 
@@ -138,7 +143,7 @@ class JobService {
   async scheduleJob(jobId: string, scheduledAt: string): Promise<ScrapingJob> {
     try {
       const response = await apiClient.post<ScrapingJob>(`/jobs/${jobId}/schedule`, {
-        scheduled_at: scheduledAt
+        scheduled_at: scheduledAt,
       });
       return response.data!;
     } catch (error: any) {
@@ -150,7 +155,7 @@ class JobService {
   async duplicateJob(jobId: string, newName?: string): Promise<ScrapingJob> {
     try {
       const response = await apiClient.post<ScrapingJob>(`/jobs/${jobId}/duplicate`, {
-        name: newName
+        name: newName,
       });
       return response.data!;
     } catch (error: any) {
@@ -186,7 +191,10 @@ class JobService {
   }
 
   // Create job with natural language query
-  async createJobFromNaturalLanguage(query: string, projectId?: string): Promise<{
+  async createJobFromNaturalLanguage(
+    query: string,
+    projectId?: string
+  ): Promise<{
     job: ScrapingJob;
     interpretation: {
       intent: string;
@@ -198,7 +206,7 @@ class JobService {
     try {
       const response = await apiClient.post('/jobs/from-natural-language', {
         query,
-        project_id: projectId
+        project_id: projectId,
       });
       return response.data!;
     } catch (error: any) {
@@ -207,13 +215,15 @@ class JobService {
   }
 
   // Get job templates
-  async getJobTemplates(): Promise<{
-    id: string;
-    name: string;
-    description: string;
-    config: JobForm;
-    category: string;
-  }[]> {
+  async getJobTemplates(): Promise<
+    {
+      id: string;
+      name: string;
+      description: string;
+      config: JobForm;
+      category: string;
+    }[]
+  > {
     try {
       const response = await apiClient.get('/jobs/templates');
       return response.data!;
@@ -223,15 +233,18 @@ class JobService {
   }
 
   // Create job from template
-  async createFromTemplate(templateId: string, jobData: {
-    name?: string;
-    url: string;
-    project_id?: string;
-  }): Promise<ScrapingJob> {
+  async createFromTemplate(
+    templateId: string,
+    jobData: {
+      name?: string;
+      url: string;
+      project_id?: string;
+    }
+  ): Promise<ScrapingJob> {
     try {
       const response = await apiClient.post<ScrapingJob>('/jobs/from-template', {
         template_id: templateId,
-        ...jobData
+        ...jobData,
       });
       return response.data!;
     } catch (error: any) {
