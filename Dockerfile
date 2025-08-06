@@ -52,15 +52,15 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
-COPY requirements-minimal.txt .
+COPY requirements-docker.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements-minimal.txt
+    pip install --no-cache-dir -r requirements-docker.txt
 
 # Install Playwright browsers
-RUN playwright install chromium && \
-    playwright install-deps chromium
+RUN python -m playwright install chromium && \
+    python -m playwright install-deps chromium
 
 # Copy application code
 COPY . .
