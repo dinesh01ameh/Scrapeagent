@@ -6,6 +6,20 @@
 
 ---
 
+## ⚠️ CRITICAL DEPLOYMENT REQUIREMENT
+
+**ALL SERVICES MUST RUN INSIDE DOCKER CONTAINERS**
+
+The frontend MUST run inside a Docker container to properly connect with:
+- PostgreSQL database (containerized)
+- Redis cache (containerized)
+- Backend API (containerized)
+- Other microservices (containerized)
+
+Running the frontend natively outside Docker will break connectivity to all containerized services and cause authentication, database, and API connection failures.
+
+---
+
 ## 🎉 **FULL STACK PRODUCTION READINESS CONFIRMED**
 
 **Validation Results:**
