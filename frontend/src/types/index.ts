@@ -27,6 +27,13 @@ export interface Session {
   metadata?: Record<string, any>;
 }
 
+export interface AuthResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  user: User;
+}
+
 export interface AuthState {
   user: User | null;
   session: Session | null;
@@ -144,7 +151,7 @@ export interface RegisterForm {
   password: string;
   confirmPassword: string;
   username?: string;
-  full_name?: string;
+  full_name: string;
   terms?: boolean;
 }
 

@@ -158,6 +158,19 @@ const LoginPage: React.FC = () => {
                 {isLoading || isSubmitting ? 'Signing In...' : 'Sign In'}
               </Button>
 
+              <Box sx={{ textAlign: 'center', mt: 2 }}>
+                <Link
+                  to="/forgot-password"
+                  style={{
+                    color: 'inherit',
+                    textDecoration: 'none',
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  Forgot your password?
+                </Link>
+              </Box>
+
               <Box textAlign="center" mt={2}>
                 <Link
                   to="/forgot-password"

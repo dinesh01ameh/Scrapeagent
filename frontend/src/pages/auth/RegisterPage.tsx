@@ -46,6 +46,7 @@ const registerSchema = yup.object({
     .matches(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
   full_name: yup
     .string()
+    .required('Full name is required')
     .min(2, 'Full name must be at least 2 characters')
     .max(50, 'Full name must be less than 50 characters'),
   terms: yup.boolean().oneOf([true], 'You must accept the terms and conditions'),
@@ -160,7 +161,7 @@ const RegisterPage: React.FC = () => {
               <TextField
                 {...register('full_name')}
                 fullWidth
-                label="Full Name (optional)"
+                label="Full Name"
                 autoComplete="name"
                 margin="normal"
                 error={!!errors.full_name}

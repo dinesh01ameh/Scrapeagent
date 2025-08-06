@@ -16,11 +16,20 @@ export const loginUser = createAsyncThunk(
   'auth/login',
   async (credentials: LoginForm, { rejectWithValue }) => {
     try {
+      console.log('Redux: Starting login process');
       const response = await authService.login(credentials);
-      localStorage.setItem('token', response.token);
+
+      if (!response.access_token) {
+        throw new Error('No access token received from server');
+      }
+
+      localStorage.setItem('token', response.access_token);
+      console.log('Redux: Login successful, token stored');
       return response;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Login failed');
+      console.error('Redux: Login failed:', error);
+      const errorMessage = error.message || 'Login failed. Please try again.';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -29,11 +38,20 @@ export const registerUser = createAsyncThunk(
   'auth/register',
   async (userData: RegisterForm, { rejectWithValue }) => {
     try {
+      console.log('Redux: Starting registration process');
       const response = await authService.register(userData);
-      localStorage.setItem('token', response.token);
+
+      if (!response.access_token) {
+        throw new Error('No access token received from server');
+      }
+
+      localStorage.setItem('token', response.access_token);
+      console.log('Redux: Registration successful, token stored');
       return response;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Registration failed');
+      console.error('Redux: Registration failed:', error);
+      const errorMessage = error.message || 'Registration failed. Please try again.';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -86,7 +104,7 @@ export const refreshToken = createAsyncThunk(
       }
 
       const response = await authService.refreshToken(currentToken);
-      localStorage.setItem('token', response.token);
+      localStorage.setItem('token', response.access_token);
       return response;
     } catch (error: any) {
       localStorage.removeItem('token');
@@ -121,8 +139,8 @@ const authSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         state.isLoading = false;
         state.user = action.payload.user;
-        state.session = action.payload.session;
-        state.token = action.payload.token;
+        state.session = null; // Backend doesn't return session in current implementation
+        state.token = action.payload.access_token;
         state.isAuthenticated = true;
         state.error = null;
       })
@@ -141,8 +159,8 @@ const authSlice = createSlice({
       .addCase(registerUser.fulfilled, (state, action) => {
         state.isLoading = false;
         state.user = action.payload.user;
-        state.session = action.payload.session;
-        state.token = action.payload.token;
+        state.session = null; // Backend doesn't return session in current implementation
+        state.token = action.payload.access_token;
         state.isAuthenticated = true;
         state.error = null;
       })
@@ -186,9 +204,9 @@ const authSlice = createSlice({
     // Refresh Token
     builder
       .addCase(refreshToken.fulfilled, (state, action) => {
-        state.token = action.payload.token;
+        state.token = action.payload.access_token;
         state.user = action.payload.user;
-        state.session = action.payload.session;
+        state.session = null; // Backend doesn't return session in current implementation
         state.isAuthenticated = true;
         state.error = null;
       })

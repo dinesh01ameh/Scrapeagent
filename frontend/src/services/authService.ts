@@ -1,10 +1,12 @@
 import { apiClient } from './apiClient';
-import { User, Session, LoginForm, RegisterForm } from '../types';
+import { User, Session, LoginForm, RegisterForm, AuthResponse } from '../types';
 
-interface AuthResponse {
+// Backend AuthResponse structure
+interface BackendAuthResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
   user: User;
-  session: Session;
-  token: string;
 }
 
 interface ValidationResponse {
@@ -16,9 +18,51 @@ class AuthService {
   // Login user
   async login(credentials: LoginForm): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
-      return response.data!;
+      console.log('Attempting login for:', credentials.email);
+      const response = await apiClient.post<BackendAuthResponse>('/auth/login', credentials);
+
+      console.log('Raw login response:', response);
+
+      // Check if response exists
+      if (!response) {
+        throw new Error('No response received from server');
+      }
+
+      // Check if response.data exists
+      if (!response.data) {
+        console.error('Response data is missing:', response);
+        throw new Error('Invalid response from server - no data');
+      }
+
+      const backendData = response.data;
+      console.log('Login response data:', backendData);
+
+      // Validate required fields exist
+      if (!backendData.access_token) {
+        console.error('Missing access_token in response:', backendData);
+        throw new Error('Server did not return authentication token');
+      }
+
+      if (!backendData.user) {
+        console.error('Missing user data in response:', backendData);
+        throw new Error('Server did not return user information');
+      }
+
+      console.log('Login successful for:', credentials.email);
+
+      // Transform backend response to frontend format
+      return {
+        access_token: backendData.access_token,
+        token_type: backendData.token_type || 'bearer',
+        expires_in: backendData.expires_in || 3600,
+        user: backendData.user,
+      };
     } catch (error: any) {
+      console.error('Login error details:', {
+        message: error.message,
+        response: error.response,
+        stack: error.stack,
+      });
       throw new Error(error.message || 'Login failed');
     }
   }
@@ -26,12 +70,61 @@ class AuthService {
   // Register new user
   async register(userData: RegisterForm): Promise<AuthResponse> {
     try {
-      // Remove confirmPassword before sending to API
-      const { confirmPassword, ...registrationData } = userData;
+      // Only send fields that the backend expects
+      const registrationData = {
+        email: userData.email,
+        password: userData.password,
+        full_name: userData.full_name,
+      };
 
-      const response = await apiClient.post<AuthResponse>('/auth/register', registrationData);
-      return response.data!;
+      console.log('Attempting registration for:', userData.email);
+      const response = await apiClient.post<BackendAuthResponse>(
+        '/auth/register',
+        registrationData
+      );
+
+      console.log('Raw registration response:', response);
+
+      // Check if response exists
+      if (!response) {
+        throw new Error('No response received from server');
+      }
+
+      // Check if response.data exists
+      if (!response.data) {
+        console.error('Response data is missing:', response);
+        throw new Error('Invalid response from server - no data');
+      }
+
+      const backendData = response.data;
+      console.log('Registration response data:', backendData);
+
+      // Validate required fields exist
+      if (!backendData.access_token) {
+        console.error('Missing access_token in response:', backendData);
+        throw new Error('Server did not return authentication token');
+      }
+
+      if (!backendData.user) {
+        console.error('Missing user data in response:', backendData);
+        throw new Error('Server did not return user information');
+      }
+
+      console.log('Registration successful for:', userData.email);
+
+      // Transform backend response to frontend format
+      return {
+        access_token: backendData.access_token,
+        token_type: backendData.token_type || 'bearer',
+        expires_in: backendData.expires_in || 3600,
+        user: backendData.user,
+      };
     } catch (error: any) {
+      console.error('Registration error details:', {
+        message: error.message,
+        response: error.response,
+        stack: error.stack,
+      });
       throw new Error(error.message || 'Registration failed');
     }
   }
@@ -49,8 +142,16 @@ class AuthService {
   // Refresh token
   async refreshToken(token: string): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post<AuthResponse>('/auth/refresh', { token });
-      return response.data!;
+      const response = await apiClient.post<BackendAuthResponse>('/auth/refresh', { token });
+      const backendData = response.data!;
+
+      // Transform backend response to frontend format
+      return {
+        access_token: backendData.access_token,
+        token_type: backendData.token_type,
+        expires_in: backendData.expires_in,
+        user: backendData.user,
+      };
     } catch (error: any) {
       throw new Error(error.message || 'Token refresh failed');
     }
