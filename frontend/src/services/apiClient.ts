@@ -37,6 +37,13 @@ class ApiClient {
     // Response interceptor for error handling
     this.client.interceptors.response.use(
       (response: AxiosResponse) => {
+        // Log successful responses for debugging
+        console.log('API Success:', {
+          status: response.status,
+          url: response.config?.url,
+          method: response.config?.method,
+          data: response.data,
+        });
         return response;
       },
       async (error) => {
@@ -51,12 +58,13 @@ class ApiClient {
             const token = localStorage.getItem('token');
             if (token) {
               const refreshResponse = await this.post('/auth/refresh', { token });
-              const newToken = refreshResponse.data.token;
+              const newToken = refreshResponse.data?.token;
 
-              localStorage.setItem('token', newToken);
-              originalRequest.headers.Authorization = `Bearer ${newToken}`;
-
-              return this.client(originalRequest);
+              if (newToken) {
+                localStorage.setItem('token', newToken);
+                originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                return this.client(originalRequest);
+              }
             }
           } catch (refreshError) {
             // Refresh failed, redirect to login
@@ -71,10 +79,54 @@ class ApiClient {
           return Promise.reject(new Error('Network error. Please check your connection.'));
         }
 
-        // Handle API errors
-        const apiError =
-          error.response.data?.error || error.response.data?.message || error.message;
-        return Promise.reject(new Error(apiError));
+        // Handle API errors with improved messaging
+        const status = error.response.status;
+        const errorData = error.response.data;
+
+        console.error('API Error:', {
+          status,
+          errorData,
+          url: error.config?.url,
+          method: error.config?.method,
+        });
+
+        // Extract error message from FastAPI response format
+        let errorMessage = 'An error occurred';
+
+        if (errorData?.detail) {
+          // FastAPI HTTPException format
+          errorMessage = errorData.detail;
+        } else if (errorData?.message) {
+          // Custom error format
+          errorMessage = errorData.message;
+        } else if (errorData?.error) {
+          // Alternative error format
+          errorMessage = errorData.error;
+        } else if (error.message) {
+          // Fallback to axios error message
+          errorMessage = error.message;
+        }
+
+        // Provide specific user-friendly messages for common scenarios
+        if (status === 401) {
+          if (errorMessage.includes('Invalid email or password')) {
+            errorMessage =
+              'Invalid email or password. If you forgot your password, please try the "Forgot Password" option.';
+          } else {
+            errorMessage = 'Authentication failed. Please check your credentials.';
+          }
+        } else if (status === 400) {
+          if (errorMessage.includes('Email already registered')) {
+            errorMessage =
+              'This email is already registered. Please try logging in instead. If you forgot your password, use "Forgot Password".';
+          } else if (errorMessage.includes('validation')) {
+            errorMessage = 'Please check your input and try again.';
+          }
+        } else if (status === 500) {
+          errorMessage = 'Server error. Please try again later.';
+        }
+
+        return Promise.reject(new Error(errorMessage));
       }
     );
   }
@@ -82,8 +134,14 @@ class ApiClient {
   // Generic request method
   private async request<T = any>(config: AxiosRequestConfig): Promise<ApiResponse<T>> {
     try {
-      const response = await this.client.request<ApiResponse<T>>(config);
-      return response.data;
+      const response = await this.client.request<T>(config);
+
+      // Return the response in ApiResponse format
+      return {
+        data: response.data,
+        status: response.status,
+        message: 'Success',
+      } as ApiResponse<T>;
     } catch (error: any) {
       throw error;
     }

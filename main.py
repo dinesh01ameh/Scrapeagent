@@ -18,7 +18,7 @@ import os
 
 from config.settings import get_settings
 from core.scraper import SwissKnifeScraper
-from api.routes import scraping, health, admin
+from api.routes import scraping, health, admin, auth
 from utils.logging import setup_logging
 from utils.exceptions import setup_exception_handlers
 from utils.port_manager import check_and_prepare_port
@@ -98,6 +98,7 @@ def create_app() -> FastAPI:
     
     # Include routers
     app.include_router(health.router, prefix="/health", tags=["Health"])
+    app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
     app.include_router(scraping.router, prefix="/api/v1/scrape", tags=["Scraping"])
     app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
 
@@ -122,12 +123,29 @@ def create_app() -> FastAPI:
                 return FileResponse(favicon_file)
             return JSONResponse({"error": "Favicon not found"}, status_code=404)
 
-        # Serve React app for dashboard routes
+        @app.get("/logo192.png")
+        async def serve_logo192():
+            logo_file = os.path.join(frontend_build_path, "logo192.png")
+            if os.path.exists(logo_file):
+                return FileResponse(logo_file, media_type="image/png")
+            return JSONResponse({"error": "Logo192 not found"}, status_code=404)
+
+        @app.get("/logo512.png")
+        async def serve_logo512():
+            logo_file = os.path.join(frontend_build_path, "logo512.png")
+            if os.path.exists(logo_file):
+                return FileResponse(logo_file, media_type="image/png")
+            return JSONResponse({"error": "Logo512 not found"}, status_code=404)
+
+        # Serve React app for all frontend routes (SPA routing)
         @app.get("/dashboard")
         @app.get("/dashboard/")
         @app.get("/dashboard/{path:path}")
-        async def serve_dashboard():
-            """Serve the React dashboard application"""
+        @app.get("/login")
+        @app.get("/register")
+        @app.get("/signup")
+        async def serve_react_app():
+            """Serve the React dashboard application for all frontend routes"""
             index_file = os.path.join(frontend_build_path, "index.html")
             if os.path.exists(index_file):
                 return FileResponse(index_file)
@@ -137,16 +155,24 @@ def create_app() -> FastAPI:
                     "message": "React frontend not built. Run 'npm run build' in the frontend directory."
                 }, status_code=404)
     else:
-        # Fallback dashboard route if frontend not built
+        # Fallback routes if frontend not built
         @app.get("/dashboard")
         @app.get("/dashboard/")
-        async def dashboard_fallback():
-            """Fallback dashboard when React app not available"""
+        @app.get("/login")
+        @app.get("/register")
+        @app.get("/signup")
+        async def frontend_fallback():
+            """Fallback for frontend routes when React app not available"""
             return JSONResponse({
                 "message": "SwissKnife AI Scraper Dashboard",
                 "status": "running",
                 "api_docs": "/docs",
                 "health": "/health",
+                "auth_endpoints": {
+                    "register": "/auth/register",
+                    "login": "/auth/login",
+                    "validate": "/auth/validate"
+                },
                 "version": "1.0.0",
                 "note": "React frontend not built. Run 'npm run build' in the frontend directory for full dashboard."
             })
