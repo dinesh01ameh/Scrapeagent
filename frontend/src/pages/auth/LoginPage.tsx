@@ -21,6 +21,7 @@ import { useAppDispatch, useAppSelector } from '../../store';
 import { loginUser, clearError } from '../../store/slices/authSlice';
 import { LoginForm } from '../../types';
 import { toast } from 'react-hot-toast';
+import SafeNavigate from '../../components/auth/SafeNavigate';
 
 // Validation schema
 const loginSchema = yup.object({
@@ -60,7 +61,7 @@ const LoginPage: React.FC = () => {
   // Redirect if already authenticated
   if (isAuthenticated) {
     const from = (location.state as any)?.from?.pathname || '/dashboard';
-    return <Navigate to={from} replace />;
+    return <SafeNavigate to={from} />;
   }
 
   const onSubmit = async (data: LoginForm) => {

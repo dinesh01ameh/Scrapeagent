@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
+import SafeNavigate from '../../components/auth/SafeNavigate';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -80,7 +81,7 @@ const RegisterPage: React.FC = () => {
 
   // Redirect if already authenticated
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <SafeNavigate to="/dashboard" />;
   }
 
   const onSubmit = async (data: RegisterForm) => {

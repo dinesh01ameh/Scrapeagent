@@ -29,7 +29,7 @@ import {
 import { useQuery } from 'react-query';
 import { useNavigate } from 'react-router-dom';
 import { dashboardService } from '../../services/dashboardService';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/MockAuthContext';
 import { toast } from 'react-hot-toast';
 
 const DashboardPage: React.FC = () => {
