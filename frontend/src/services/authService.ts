@@ -10,8 +10,9 @@ interface BackendAuthResponse {
 }
 
 interface ValidationResponse {
-  user: User;
-  session: Session;
+  valid: boolean;
+  user?: User;
+  expires_at?: string;
 }
 
 class AuthService {
@@ -133,7 +134,13 @@ class AuthService {
   async validateToken(token: string): Promise<ValidationResponse> {
     try {
       const response = await apiClient.post<ValidationResponse>('/auth/validate', { token });
-      return response.data!;
+      const data = response.data!;
+      
+      if (!data.valid) {
+        throw new Error('Token is invalid');
+      }
+      
+      return data;
     } catch (error: any) {
       throw new Error(error.message || 'Token validation failed');
     }

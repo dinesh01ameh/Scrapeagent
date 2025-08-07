@@ -177,9 +177,9 @@ const authSlice = createSlice({
       })
       .addCase(validateToken.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload.user;
-        state.session = action.payload.session;
-        state.isAuthenticated = true;
+        state.user = action.payload.user || null;
+        state.session = null; // Backend doesn't return session in validation
+        state.isAuthenticated = !!action.payload.user;
         state.error = null;
       })
       .addCase(validateToken.rejected, (state, action) => {
