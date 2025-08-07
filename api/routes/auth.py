@@ -129,10 +129,15 @@ async def login(request: LoginRequest):
         
         # Return token and user info
         user_info = {
-            "id": user["id"],
+            "id": str(user["id"]),  # Convert to string for frontend compatibility
             "email": user["email"],
             "full_name": user["full_name"],
-            "created_at": user["created_at"]
+            "is_active": True,
+            "is_verified": True,
+            "subscription_tier": "free",
+            "created_at": user["created_at"],
+            "updated_at": user["created_at"],
+            "metadata": {}
         }
         
         logger.info(f"User logged in: {request.email}")
@@ -188,10 +193,15 @@ async def register(request: RegisterRequest):
         
         # Return token and user info
         user_info = {
-            "id": user["id"],
+            "id": str(user["id"]),  # Convert to string for frontend compatibility
             "email": user["email"],
             "full_name": user["full_name"],
-            "created_at": user["created_at"]
+            "is_active": True,
+            "is_verified": True,
+            "subscription_tier": "free",
+            "created_at": user["created_at"],
+            "updated_at": user["created_at"],
+            "metadata": {}
         }
         
         logger.info(f"New user registered: {request.email}")
@@ -224,10 +234,15 @@ async def validate_token(request: ValidationRequest):
             return ValidationResponse(valid=False)
         
         user_info = {
-            "id": user["id"],
+            "id": str(user["id"]),  # Convert to string for frontend compatibility
             "email": user["email"],
             "full_name": user["full_name"],
-            "created_at": user["created_at"]
+            "is_active": True,
+            "is_verified": True,
+            "subscription_tier": "free",
+            "created_at": user["created_at"],
+            "updated_at": user["created_at"],
+            "metadata": {}
         }
         
         return ValidationResponse(
@@ -264,10 +279,15 @@ async def refresh_token(request: ValidationRequest):
         )
         
         user_info = {
-            "id": user["id"],
+            "id": str(user["id"]),  # Convert to string for frontend compatibility
             "email": user["email"],
             "full_name": user["full_name"],
-            "created_at": user["created_at"]
+            "is_active": True,
+            "is_verified": True,
+            "subscription_tier": "free",
+            "created_at": user["created_at"],
+            "updated_at": user["created_at"],
+            "metadata": {}
         }
         
         return TokenResponse(

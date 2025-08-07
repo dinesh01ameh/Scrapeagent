@@ -18,7 +18,7 @@ import os
 
 from config.settings import get_settings
 from core.scraper import SwissKnifeScraper
-from api.routes import scraping, health, admin, auth
+from api.routes import scraping, health, admin, auth, projects
 from utils.logging import setup_logging
 from utils.exceptions import setup_exception_handlers
 from utils.port_manager import check_and_prepare_port
@@ -99,6 +99,7 @@ def create_app() -> FastAPI:
     # Include routers
     app.include_router(health.router, prefix="/health", tags=["Health"])
     app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
+    app.include_router(projects.router, prefix="/projects", tags=["Projects"])
     app.include_router(scraping.router, prefix="/api/v1/scrape", tags=["Scraping"])
     app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
 

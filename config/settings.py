@@ -30,7 +30,10 @@ class Settings(BaseSettings):
     SUPABASE_URL: Optional[str] = Field(default=None, env="SUPABASE_URL")
     SUPABASE_KEY: Optional[str] = Field(default=None, env="SUPABASE_KEY")
     SUPABASE_SERVICE_KEY: Optional[str] = Field(default=None, env="SUPABASE_SERVICE_KEY")
-    DATABASE_URL: Optional[str] = Field(default=None, env="DATABASE_URL")
+    DATABASE_URL: Optional[str] = Field(default="postgresql://postgres:postgres@localhost:5434/scrapeagent", env="DATABASE_URL")
+    DATABASE_MIN_CONNECTIONS: int = Field(default=1, env="DATABASE_MIN_CONNECTIONS")
+    DATABASE_MAX_CONNECTIONS: int = Field(default=10, env="DATABASE_MAX_CONNECTIONS")
+    DATABASE_TIMEOUT: int = Field(default=30, env="DATABASE_TIMEOUT")
     
     # Redis Configuration
     REDIS_URL: str = Field(default="redis://localhost:6379", env="REDIS_URL")
