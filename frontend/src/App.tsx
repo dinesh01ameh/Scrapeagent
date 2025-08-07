@@ -8,7 +8,7 @@ import { Toaster } from 'react-hot-toast';
 
 import { store } from './store';
 import { AuthProvider } from './contexts/AuthContext';
-import ProtectedRoute from './components/auth/ProtectedRoute';
+import ProtectedRoute, { NavigationErrorBoundary, SmartRootRedirect } from './components/auth/ProtectedRoute';
 import Layout from './components/layout/Layout';
 
 // Pages
@@ -86,37 +86,66 @@ const App: React.FC = () => {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <AuthProvider>
-            <Router>
-              <div className="App">
-                <Routes>
-                  {/* Public routes */}
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/register" element={<RegisterPage />} />
+          <NavigationErrorBoundary>
+            <AuthProvider>
+              <Router>
+                <div className="App">
+                  <Routes>
+                    {/* Root route with smart redirect */}
+                    <Route path="/" element={<SmartRootRedirect />} />
 
-                  {/* Protected routes */}
-                  <Route
-                    path="/"
-                    element={
+                    {/* Public routes */}
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+
+                    {/* Protected routes */}
+                    <Route path="/dashboard" element={
                       <ProtectedRoute>
-                        <Layout />
+                        <Layout>
+                          <DashboardPage />
+                        </Layout>
                       </ProtectedRoute>
-                    }
-                  >
-                    <Route index element={<Navigate to="/dashboard" replace />} />
-                    <Route path="dashboard" element={<DashboardPage />} />
-                    <Route path="projects" element={<ProjectsPage />} />
-                    <Route path="jobs" element={<JobsPage />} />
-                    <Route path="content" element={<ContentPage />} />
-                    <Route path="settings" element={<SettingsPage />} />
-                  </Route>
+                    } />
 
-                  {/* Catch all route */}
-                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                </Routes>
-              </div>
-            </Router>
-          </AuthProvider>
+                    <Route path="/projects" element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <ProjectsPage />
+                        </Layout>
+                      </ProtectedRoute>
+                    } />
+
+                    <Route path="/jobs" element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <JobsPage />
+                        </Layout>
+                      </ProtectedRoute>
+                    } />
+
+                    <Route path="/content" element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <ContentPage />
+                        </Layout>
+                      </ProtectedRoute>
+                    } />
+
+                    <Route path="/settings" element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <SettingsPage />
+                        </Layout>
+                      </ProtectedRoute>
+                    } />
+
+                    {/* Catch all route */}
+                    <Route path="*" element={<SmartRootRedirect />} />
+                  </Routes>
+                </div>
+              </Router>
+            </AuthProvider>
+          </NavigationErrorBoundary>
 
           {/* Toast notifications */}
           <Toaster

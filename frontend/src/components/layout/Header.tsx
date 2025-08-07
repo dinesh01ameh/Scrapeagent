@@ -24,7 +24,7 @@ import {
 import { useAppDispatch, useAppSelector } from '../../store';
 import { toggleSidebar } from '../../store/slices/uiSlice';
 import { logoutUser } from '../../store/slices/authSlice';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/MockAuthContext';
 import { toast } from 'react-hot-toast';
 
 interface HeaderProps {
